@@ -1,35 +1,25 @@
-% =========================================================================
-% Script de Teste - Bit-Flipping Decoding (Baseado na Apostila)
-% =========================================================================
-clc; clear;
-
-% 1. Matriz de Paridade H (Exemplo 1.12)
-B = [0 2 -1 1;1 -1 2 0];
-Zc = 3;
-s = 5;
-
-H = BaseGraphLifting(B,Zc,s);
-
-display(H);
-
-max_iter = 30; % Limite de segurança
-
-%% Teste: O Cenário de Sucesso (Exemplo 2.3)
-disp('======================================================');
-disp(' TESTE: Exemplo 2.3 - Correção por Bit-Flipping');
-disp('======================================================');
-
-%Descubro o núemro de colunas de m da matriz H gerada
-m = width(H);
-
-% Vetor aleatório recebido
-y = geradormessage(m);
-
-% Chamando a função que criamos
-[M, iter] = BitFlipping(y, H, max_iter);
-
-fprintf('Iterações necessárias para convergência: %d\n', iter);
-disp('Vetor Recebido com Erro:');
-disp(y);
-disp('Vetor Decodificado pelo MATLAB:');
-disp(M);
+function [expandedGraph] = BaseGraphLifting(B, Zc, s)
+    [m, n] = size(B);
+    
+    %guardo o grafo expandido em células de vetores
+    expandedGraph_cell = cell(m, n);
+    for i = 1:m
+        for j = 1:n
+            if B(i,j) == 0
+                expandedGraph_cell{i,j} = eye(Zc);  %valor zero é matriz identidade
+            elseif B(i,j) == 1
+                %movimento coluna x posiçào para direita
+                expandedGraph_cell{i,j} = circshift(eye(Zc), [0, 1]);
+            elseif B(i,j) == 2
+                expandedGraph_cell{i,j} = circshift(eye(Zc), [0, 2]);
+            elseif B(i,j) > 2
+                expandedGraph_cell{i,j} = circshift(eye(Zc), [0, s]);
+            else
+                expandedGraph_cell{i,j} = zeros(Zc);  %valores negativos matriz nula
+            end
+        end
+    end
+    
+    %converte as várias células para matriz 
+    expandedGraph = cell2mat(expandedGraph_cell);
+end
