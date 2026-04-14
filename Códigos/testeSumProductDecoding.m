@@ -6,15 +6,14 @@ clc; clear;
 % 1. Matriz de Paridade H
 B = [0 2 -1 1;1 -1 2 0];
 Zc = 3;
-s = 5;
 
-H = BaseGraphLifting(B,Zc,s);
+H = BaseGraphLifting(B,Zc);
 
 m = width(H);
 
 display(H);
 
-% 2. Vetor LLR de entrada calculado na apostila (página 33)
+% 2. Vetor LLR de entrada calculado
 r = (4*rand(1,m) - 2);
 
 

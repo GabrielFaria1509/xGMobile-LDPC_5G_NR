@@ -1,4 +1,4 @@
-function [expandedGraph] = BaseGraphLifting(B, Zc, s)
+function [expandedGraph] = BaseGraphLifting(B, Zc)
     [m, n] = size(B);
     
     %guardo o grafo expandido em células de vetores
@@ -7,13 +7,9 @@ function [expandedGraph] = BaseGraphLifting(B, Zc, s)
         for j = 1:n
             if B(i,j) == 0
                 expandedGraph_cell{i,j} = eye(Zc);  %valor zero é matriz identidade
-            elseif B(i,j) == 1
+            elseif B(i,j) > 0
                 %movimento coluna x posiçào para direita
-                expandedGraph_cell{i,j} = circshift(eye(Zc), [0, 1]);
-            elseif B(i,j) == 2
-                expandedGraph_cell{i,j} = circshift(eye(Zc), [0, 2]);
-            elseif B(i,j) > 2
-                expandedGraph_cell{i,j} = circshift(eye(Zc), [0, s]);
+                expandedGraph_cell{i,j} = circshift(eye(Zc), [0,B(i,j)]);
             else
                 expandedGraph_cell{i,j} = zeros(Zc);  %valores negativos matriz nula
             end
