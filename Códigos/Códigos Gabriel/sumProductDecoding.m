@@ -1,4 +1,4 @@
-function [z, I, L] = sumProductDecoding(r, H, max_iter)
+function [z, I, L,success] = sumProductDecoding(r, H, max_iter)
     % =========================================================================
     % Algoritmo 4: Sum-Product Decoding (Soft-Decision)
     % Entradas:
@@ -49,9 +49,8 @@ function [z, I, L] = sumProductDecoding(r, H, max_iter)
                 % divididas por 2, e multiplica todas elas (produtório)
                 produtorio = prod(tanh(M(j, outros_bits) / 2));
                 
-                % Dica de Engenharia: Em canais com ruído extremo, o produtório 
-                % pode arredondar para exatamente 1 ou -1 no MATLAB, gerando log(0).
-                % Para simulações perfeitas, o MATLAB processa isso gerando 'Inf' ou '-Inf'.
+                
+              
                 E(j, i) = log((1 + produtorio) / (1 - produtorio));
             end
         end % FIM DO STEP 1 
@@ -103,4 +102,10 @@ function [z, I, L] = sumProductDecoding(r, H, max_iter)
         end
         
     end % fim do loop while
+    
+    if all(sindrome == 0)
+        success = true;
+    else
+        success = false;
+    end
 end % fim da função
