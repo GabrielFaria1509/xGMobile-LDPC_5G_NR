@@ -1,6 +1,6 @@
 % -1 será um bit apagado
 % Erasure decoding algorithm
-function [M, I] = erasureDecoding(y, H, max_iter)
+function [M, I,success] = erasureDecoding(y, H, max_iter)
     % y: vetor recebido
     % H: matriz de paridade
     % max_iter: número máximo de iterações
@@ -83,5 +83,20 @@ function [M, I] = erasureDecoding(y, H, max_iter)
         end
         
     end % Fim do loop principal
-end % Fim da função
 
+    if any(M == -1)
+        % Se saiu do loop e ainda tem -1, caiu em um Stopping Set
+        success = false; 
+    else
+        % Se não tem mais -1, checa se a palavra é válida (Síndrome = 0)
+        sindrome = mod(H * M', 2);
+        if all(sindrome == 0)
+            success = true; % Palavra válida e perfeita!
+        else
+            success = false; % Convergiu, mas para uma palavra inválida
+        end
+    end
+
+    
+    
+end % Fim da função
