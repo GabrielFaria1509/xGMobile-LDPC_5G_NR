@@ -12,24 +12,24 @@ m = width(H);
 % 2. Gera a mensagem aleatória (sabemos que para esse B e Zc, são 12 bits)
 y_original = geradormessage(m);
 
-% 3. Insere os apagamentos (usando -1)
-num_apagamentos = 3;
-
-posicoes_apagadas = randperm(width(y_original),num_apagamentos)
-
-disp('Vetor Recebido com Apagamentos (-1):');
-y1 = y_original;
-y1(posicoes_apagadas) = -1;
+%simualação canal 
+erasure_prop = 0.5;
+tam = length(y_original);
+for i = 1 : tam
+    if rand <= erasure_prop
+        y_original(i) = -1
+    end
+end
 
 disp('Mensagem Original:');
 disp(y_original);
 
 disp('Vetor Recebido com Apagamentos (-1):');
-disp(y1);
+disp(y_original);
 
 % 4. Roda o decodificador
 max_iter = 30;
-[M1, iter1] = erasureDecoding(y1, H, max_iter);
+[M1, iter1] = erasureDecoding(y_original, H, max_iter);
 
 disp('Vetor Decodificado pelo MATLAB:');
 disp(M1);
