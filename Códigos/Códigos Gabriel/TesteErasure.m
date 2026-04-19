@@ -1,11 +1,13 @@
 clc; clear;
 
 % 1. Gera a matriz H com o Base Graph
-B = [0 2 -1 1; 
-     1 -1 2 0];
 Zc = 3;
-s = 5;
-H = BaseGraphLifting(B, Zc, s);
+set_index  = 0;
+disp('Gerando Matriz do 5G...');
+BG = GeradorBG1("Códigos\Códigos Gabriel\BG1.csv", set_index, Zc);
+H = BaseGraphLifting(matriz_base, Zc);
+disp('Matriz H gerada com sucesso!');
+
 %Descubro o núemro de colunas de m da matriz H gerada
 m = width(H);
 

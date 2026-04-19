@@ -4,11 +4,15 @@
 clc; clear;
 
 % 1. Matriz de Paridade H (Exemplo 1.12)
-B = [0 2 -1 1;1 -1 2 0];
-Zc = 3;
+% 1. Parâmetros do 5G
+Zc = 384;      
+set_index = 0;
+% 2. Gera a matriz e faz o lifting
+disp('Gerando Matriz do 5G...');
+BG = GeradorBG1("Códigos\Códigos Gabriel\BG1.csv", set_index, Zc);
+H = BaseGraphLifting(BG, Zc);
+disp('Matriz H gerada com sucesso!');
 
-
-H = BaseGraphLifting(B,Zc);
 
 display(H);
 
