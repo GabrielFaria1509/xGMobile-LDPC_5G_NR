@@ -1,4 +1,4 @@
-function [M, I] = BitFlipping(y, H, max_iter)
+function [M, I,success] = BitFlipping(y, H, max_iter)
     % Entradas:
     %   y        : Vetor recebido (bits 0 e 1 - Hard Decision)
     %   H        : Matriz de paridade LDPC
@@ -10,6 +10,9 @@ function [M, I] = BitFlipping(y, H, max_iter)
     [m, n] = size(H);
     I = 0;
     M = y;
+
+    %variávcel de controle
+    success = false;
     
     % Criando a matriz E que vai guardar as mensagens dos Check Nodes.
     % E(j,i) será o "voto" da equação j sobre qual deve ser o valor do bit i.
@@ -70,6 +73,7 @@ function [M, I] = BitFlipping(y, H, max_iter)
         
         if todos_corretos || (I >= max_iter)
             Finished = true;
+            success = true;
         end
         
     end % fim loop

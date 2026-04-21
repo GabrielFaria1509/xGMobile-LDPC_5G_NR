@@ -35,3 +35,9 @@ max_iter = 30;
 
 disp('Vetor Decodificado pelo MATLAB:');
 disp(M1);
+
+if success
+    disp("Sucesso palavra-código válida");
+else
+    disp("Falha palavra-código inválida");
+end
