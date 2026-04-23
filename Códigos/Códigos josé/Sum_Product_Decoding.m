@@ -1,12 +1,5 @@
-
-    H = [1 1 0 1 0 0;
-         0 1 1 0 1 0;
-         1 0 0 0 1 1;
-         0 0 1 1 0 1];
-    
+function z = Sum_Product_Decoding(H, r, I_maximo)
     [m, n] = size(H);
-    
-    r = [-0.5 2.5 -4.0 5.0 -3.5 2.5];
     
     B = {};
     A = {};
@@ -28,9 +21,8 @@
     end
     
     I = 0;
-    Imax = 10000000;
     
-    while I < Imax
+    while I < I_maximo
        
         E = zeros(m, n);
         
@@ -66,7 +58,7 @@
         end
         
         if all(mod(H*z', 2) == 0)
-         %   break
+            break
         end
         
         for i = 1:n
@@ -86,6 +78,9 @@
         
         I = I + 1;
     end
+
+    if any(mod(H*z', 2) ~= 0)
+        error('Não foi possível decodificar')
+    end
+
     
-    disp('Resultado decodificado:')
-    disp(z)

@@ -7,7 +7,7 @@ function H = Gerador_BG(BG, set_index, Z)
     
     [m,n] = size(H);
     
-    for l = 1:m%roda todas as linhas de H
+    for l = 1:m %roda todas as linhas de H
     
         %seleciona uma linha do BG
         linha = BG(BG.row_i == l-1, ["col_j" sprintf('set_%d', set_index)]);
