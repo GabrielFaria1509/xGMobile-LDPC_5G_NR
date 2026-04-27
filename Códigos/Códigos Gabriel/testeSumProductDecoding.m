@@ -5,7 +5,7 @@ clc; clear;
 
 % 1. Matriz de Paridade H
 % 2. Gera a matriz e faz o lifting
-Zc = 384;      
+Zc = 20;      
 set_index = 0;
 disp('Gerando Matriz do 5G...');
 BG = GeradorBG1("Códigos\Códigos Gabriel\BG1.csv", set_index, Zc);
@@ -34,7 +34,7 @@ disp(' TESTE - Sum-Product Decoding');
 disp('======================================================');
 
 % Chamando a função que criamos
-[z, iter, L,success] = sumProductDecoding(r, H, max_iter);
+[z, iter, L,success] = minSumDecoding(r, H, max_iter);
 
 % =========================================================================
 % Resultados para Comparação (Baseado nas páginas 35 e 36)
