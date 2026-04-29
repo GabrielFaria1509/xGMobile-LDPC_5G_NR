@@ -1,20 +1,33 @@
 % =========================================================================
-% Script de Teste - Sum-Product Decoding (Baseado no Exemplo 2.5 da Apostila)
+% Script de Teste Min-Sum Decoding Decoding (Baseado no Exemplo 2.5 da Apostila)
 % =========================================================================
 clc; clear;
 
 % 1. Matriz de Paridade H
 % 2. Gera a matriz e faz o lifting
-Zc = 20;      
-set_index = 0;
+% No C++ seria: cout << "Digite o Zc: "; cin >> Zc;
+% No MATLAB é apenas:
+Zc = input('Digite o valor de Zc para a matriz: ');  
+set_index = input("Digite o set index : ");
+opcao_bg = input("Digite o BG base : ");
+% 2. Gera a matriz e faz o lifting
 disp('Gerando Matriz do 5G...');
-BG = GeradorBG("Códigos\Códigos Gabriel\BG1.csv", set_index, Zc);
+  if opcao_bg == 1
+      BG = GeradorBG("Códigos\Códigos Gabriel\BG1.csv", set_index, Zc,opcao_bg);
+  elseif opcao_bg == 2
+      BG = GeradorBG("Códigos\Códigos José\Base_Graph_2.csv", set_index, Zc,opcao_bg);
+
+  else
+    error('Opção de BG inválida! O script será encerrado.');
+
+  end
+      
 H = BaseGraphLifting(BG, Zc);
 disp('Matriz H gerada com sucesso!');
 
 m = width(H);
 
-display(H);
+spy(H);
 
 % 2. Vetor LLR de entrada calculado
 r = (4*rand(1,m) - 2);
@@ -27,7 +40,7 @@ r = r + noise;
 
 
 % Limite de iterações definido na apostila
-max_iter = 10;
+max_iter = 60;
 
 disp('======================================================');
 disp(' TESTE - Sum-Product Decoding');

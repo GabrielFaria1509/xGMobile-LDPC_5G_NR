@@ -5,16 +5,26 @@ clc; clear;
 
 % 1. Matriz de Paridade H (Exemplo 1.12)
 % 1. Parâmetros do 5G
-Zc = 5;      
-set_index = 0;
+Zc = input('Digite o valor de Zc para a matriz: ');  
+set_index = input("Digite o set index");
+opcao_bg = input("Digite o BG base : ");
 % 2. Gera a matriz e faz o lifting
 disp('Gerando Matriz do 5G...');
-BG = GeradorBG("Códigos\Códigos Gabriel\BG1.csv", set_index, Zc);
+ if opcao_bg == 1
+      BG = GeradorBG("Códigos\Códigos Gabriel\BG1.csv", set_index, Zc,opcao_bg);
+  elseif opcao_bg == 2
+      BG = GeradorBG("Códigos\Códigos José\Base_Graph_2.csv", set_index, Zc,opcao_bg);
+
+  else
+    error('Opção de BG inválida! O script será encerrado.');
+
+  end
+      
 H = BaseGraphLifting(BG, Zc);
 disp('Matriz H gerada com sucesso!');
 
 
-display(H);
+spy(H);
 
 max_iter = 60; % Limite de segurança
 
@@ -35,11 +45,11 @@ display(y);
 
 %Simulação de canal com ruído
 % Adicionando ruído ao vetor recebido
-noise_level = 0.5; 
+noise_level = 0.05; 
 
 %Crio um vetor de 1 linha e colunas m,gera aleatórios entre 0 e 1(rand)
 % Onde for menor que 0.1, ele marca como 1 (erro), caso contrário 0 (ok).
-mascara_erros = rand(1,m) < noise_level
+mascara_erros = rand(1,m) < noise_level;
 
 disp("Máscara de erros");
 disp(double(mascara_erros));
