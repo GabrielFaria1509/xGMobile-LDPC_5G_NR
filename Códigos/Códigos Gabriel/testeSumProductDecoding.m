@@ -27,7 +27,7 @@ r = r + noise;
 
 
 % Limite de iterações definido na apostila
-max_iter = 10;
+max_iter = 60;
 
 disp('======================================================');
 disp(' TESTE - Sum-Product Decoding');
