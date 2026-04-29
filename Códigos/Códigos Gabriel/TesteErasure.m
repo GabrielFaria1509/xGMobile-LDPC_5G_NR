@@ -4,7 +4,7 @@ clc; clear;
 Zc = 3;
 set_index  = 0;
 disp('Gerando Matriz do 5G...');
-BG = GeradorBG1("Códigos\Códigos Gabriel\BG1.csv", set_index, Zc);
+BG = GeradorBG("Códigos\Códigos Gabriel\BG1.csv", set_index, Zc);
 H = BaseGraphLifting(matriz_base, Zc);
 disp('Matriz H gerada com sucesso!');
 
