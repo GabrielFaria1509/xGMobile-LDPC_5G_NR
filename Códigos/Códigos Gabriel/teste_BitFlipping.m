@@ -13,7 +13,7 @@ disp('Gerando Matriz do 5G...');
  if opcao_bg == 1
       BG = GeradorBG("Códigos\Códigos Gabriel\BG1.csv", set_index, Zc,opcao_bg);
   elseif opcao_bg == 2
-      BG = GeradorBG("Códigos\Códigos José\Base_Graph_2.csv", set_index, Zc,opcao_bg);
+      BG = GeradorBG("Códigos\Códigos José\BG2.csv", set_index, Zc,opcao_bg);
 
   else
     error('Opção de BG inválida! O script será encerrado.');
