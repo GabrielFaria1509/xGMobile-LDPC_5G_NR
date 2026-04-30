@@ -1,11 +1,22 @@
 % =========================================================================
 % Script de Teste - Erasure Decoding (Canal de Apagamento)
 % =========================================================================
-clc; clear;
+clc; clear
 
 % 1. Gera a matriz H com o Base Graph
-Zc = input('Digite o valor de Zc para a matriz: ');  
-set_index = input('Digite o set index : ');
+Zc = input('Digite o valor de Zc para a matriz: ');
+%é escolhido o set index com base no lifting desejado
+Lifting_po_index = readmatrix("Códigos Gabriel\set.csv");
+
+linha_Zc = find(Lifting_po_index(:,1) == Zc);
+
+if isempty(linha_Zc)
+    error("Zc inválido! Esse valor não existe na tabela da norma 3GPP.")
+end
+
+set_index = Lifting_po_index(linha_Zc,2);
+
+
 opcao_bg = input('Digite o BG base (1 para BG1, 2 para BG2): ');
 
 % 2. Gera a matriz e faz o lifting
@@ -13,7 +24,7 @@ disp('Gerando Matriz do 5G...');
 if opcao_bg == 1
     BG = GeradorBG("Códigos\Códigos Gabriel\BG1.csv", set_index, Zc, opcao_bg);
 elseif opcao_bg == 2
-    BG = GeradorBG("Códigos\Códigos Gabriel\BG2.csv", set_index, Zc, opcao_bg);
+    B = GeradorBG("Códigos\Códigos Gabriel\BG2.csv", set_index, Zc, opcao_bg);
 else
     error('Opção de BG inválida! O script será encerrado.');
 end

@@ -6,7 +6,17 @@ clc; clear;
 % 1. Matriz de Paridade H (Exemplo 1.12)
 % 1. Parâmetros do 5G
 Zc = input('Digite o valor de Zc para a matriz: ');  
-set_index = input("Digite o set index");
+% 1. Gera a matriz H com o Base Graph
+%é escolhido o set index com base no lifting desejado
+Lifting_po_index = readmatrix("Códigos Gabriel\set.csv");
+
+linha_Zc = find(Lifting_po_index(:,1) == Zc);
+
+if isempty(linha_Zc)
+    error("Zc inválido! Esse valor não existe na tabela da norma 3GPP.")
+end
+
+set_index = Lifting_po_index(linha_Zc,2);
 opcao_bg = input("Digite o BG base : ");
 % 2. Gera a matriz e faz o lifting
 disp('Gerando Matriz do 5G...');
