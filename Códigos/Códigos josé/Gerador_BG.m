@@ -1,32 +1,24 @@
-function H = Gerador_BG(BG, set_index, Z)
-    %Le o BG básico 
-    BG = readtable(BG);
+function H = Gerador_BG(BG, Z)
+    Tabela = readtable('Tabela_Set.csv')
+    
+    l = Tabela(Tabela.lifting == Z, :);
+    set_index = l{1,2}
     
     %Base para a matriz final
-    H = ones(42, 52)*-1;
+    if BG == 1
+        BG = readtable('BG1.csv');
+        H = ones(46, 68)*-1;
+        else
+        BG = readtable('BG2.csv');
+        H = ones(42, 52) * -1;
+    end
     
-    [m,n] = size(H);
-    
-    for l = 1:m %roda todas as linhas de H
-    
-        %seleciona uma linha do BG
-        linha = BG(BG.row_i == l-1, ["col_j" sprintf('set_%d', set_index)]);
-    
-        contador = 1; %contador conta em qual indice da table está
-        for c = 1:n %c conta qual coluna de H está
-            if contador <= height(linha) %analiza se já lemos a table inteira
-    
-                j = linha.col_j(contador);
-    
-                if j == c-1 %verifica se o valor existe na table
-    
-                    %atualiza o valor
-                    valor = mod(linha.(sprintf('set_%d', set_index))(contador), Z);
-                    H(l, c) = valor;
-                    contador = contador+1;
-                end
-            else
-                break
-            end
-        end
+    for i = 1:height(BG) %roda todas as linhas de H
+        
+        l = BG{i,1};
+        c = BG{i,2};
+        
+        valor_bruto = BG{i,sprintf('s%d', set_index)};
+        valor = mod(valor_bruto, Z);
+        H(l+1,c+1) = valor;
     end
