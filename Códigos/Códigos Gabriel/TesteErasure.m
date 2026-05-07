@@ -32,11 +32,18 @@ end
 H = BaseGraphLifting(BG, Zc);
 disp('Matriz H gerada com sucesso!');
 
-% Descubro o número de colunas m da matriz H gerada
-m = width(H);
+
+% Gero a G
+G = GeradorG(H);
+
+%Gero a mensagem
+mensagem = geradormessage(G);
+
+%Codifico a mensagem
+palavra_codigo = GeradorPalvraCodigo(mensagem,G);
 
 % 3. Gera a mensagem (Usando zeros provisoriamente como combinado)
-y_original = geradormessage(m); 
+y_original = palavra_codigo;
 
 % Simulação canal (Canal de Apagamento)
 erasure_prop = 0.5; % 50% de apagamento (bem agressivo para testes)

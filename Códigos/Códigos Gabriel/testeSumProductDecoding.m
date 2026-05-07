@@ -35,9 +35,18 @@ disp('Gerando Matriz do 5G...');
 H = BaseGraphLifting(BG, Zc);
 disp('Matriz H gerada com sucesso!');
 
-m = width(H);
-
 spy(H);
+
+%Gerar Matriz G
+G = GeradorG(H);
+
+spy(G);
+
+%Gero a mensagem
+mensagem = geradormessage(G);
+
+%Codifico a palavra
+palavra_codigo = GeradorPalavraCodigo(mensagem,G);
 
 % 2. Vetor LLR de entrada calculado
 r = (4*rand(1,m) - 2);

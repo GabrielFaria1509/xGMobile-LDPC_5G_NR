@@ -33,8 +33,16 @@ disp('Gerando Matriz do 5G...');
 H = BaseGraphLifting(BG, Zc);
 disp('Matriz H gerada com sucesso!');
 
-
 spy(H);
+
+%%Gero matriz G
+G = GeradorG(H);
+
+%Gero mensagem
+mensagem = geradormessage(G);
+
+%Codifico a palavra
+palavra_codigo = GeradorPalavraCodigo(mensagem,G);
 
 max_iter = 60; % Limite de segurança
 
