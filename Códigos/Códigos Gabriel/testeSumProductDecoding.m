@@ -35,12 +35,13 @@ disp('Gerando Matriz do 5G...');
 H = BaseGraphLifting(BG, Zc);
 disp('Matriz H gerada com sucesso!');
 
-spy(H);
+
 
 %Gerar Matriz G
 G = GeradorG(H);
 
 spy(G);
+title("Matriz G");
 
 %Gero a mensagem
 mensagem = geradormessage(G);
