@@ -44,10 +44,15 @@ spy(G);
 title("Matriz G");
 
 %Gero a mensagem
-mensagem = geradormessage(G);
+tamanho_pacote = input("Qual tamanho da mensagem ? ");
+m = geradormessage(tamanho_pacote);
+
 
 %Codifico a palavra
-palavra_codigo = GeradorPalavraCodigo(mensagem,G);
+palavra_codigo = GeradorPalavraCodigo(m,G);
+
+disp(palavra_codigo);
+
 
 % 2. Vetor LLR de entrada calculado
 r = (4*rand(1,m) - 2);

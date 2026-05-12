@@ -37,10 +37,14 @@ disp('Matriz H gerada com sucesso!');
 G = GeradorG(H);
 
 %Gero a mensagem
-mensagem = geradormessage(G);
+tamanho_pacote = input("Qual tamanho da mensagem ? ");
+m = geradormessage(tamanho_pacote);
 
-%Codifico a mensagem
-palavra_codigo = GeradorPalvraCodigo(mensagem,G);
+
+%Codifico a palavra
+palavra_codigo = GeradorPalavraCodigo(m,G);
+
+disp(palavra_codigo);
 
 % 3. Gera a mensagem (Usando zeros provisoriamente como combinado)
 y_original = palavra_codigo;

@@ -38,11 +38,15 @@ spy(H);
 %%Gero matriz G
 G = GeradorG(H);
 
-%Gero mensagem
-mensagem = geradormessage(G);
+%Gero a mensagem
+tamanho_pacote = input("Qual tamanho da mensagem ? ");
+m = geradormessage(tamanho_pacote);
+
 
 %Codifico a palavra
-palavra_codigo = GeradorPalavraCodigo(mensagem,G);
+palavra_codigo = GeradorPalavraCodigo(m,G);
+
+disp(palavra_codigo);
 
 max_iter = 60; % Limite de segurança
 
