@@ -1,4 +1,4 @@
-function base = GeradorBG(opcao_bg, Zc)
+function BG = GeradorBG(opcao_bg, Zc)
 %inputs:
 %opcao_bg: qual base graph esolhido (1 ou 2)
 %Zc: lifiting size
@@ -34,6 +34,6 @@ function base = GeradorBG(opcao_bg, Zc)
 
         %analiza o valor que está no csv e adiciona no base graph
         valor_bruto = base{i,sprintf('s%d', set_index)};
-        valor = mod(valor_bruto, Z);
+        valor = mod(valor_bruto, Zc);
         BG(l+1,c+1) = valor;
     end
