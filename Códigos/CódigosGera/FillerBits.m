@@ -24,7 +24,5 @@ function [u, F] = FillerBits(mensagem, G)
     mensagem_camuflada(mensagem == -1) = 0;
     
     %u é o nome dado para o array que contém a mensagem e os filler bits
-    u = mod(mensagem_camuflada* G, 2);
-
-    u(1:k_G) = mensagem;
+    u = mensagem_camuflada;
 end
