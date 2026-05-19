@@ -5,7 +5,7 @@ function base = GeradorBG(opcao_bg, Zc)
 
 
     %Tabela com os set index de acordo com o Zc
-    Tabela = readtable('Tabela_Set.csv');
+    Tabela = readtable('set.csv');
 
 
     set_possiveis = Tabela(Tabela.lifting == Zc, :);
