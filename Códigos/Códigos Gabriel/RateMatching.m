@@ -1,4 +1,4 @@
-function f_interleaved = RateMatching(c, BG, Zc, E, rv_idx, Q_m)
+function f_interleaved = RateMatching(c, BG, Zc, E,Q_m,success)
     %% =========================================================================
     %% DICIONÁRIO DE VARIÁVEIS | VARIABLE LEGEND (3GPP TS 38.212)
     %% =========================================================================
@@ -23,6 +23,33 @@ function f_interleaved = RateMatching(c, BG, Zc, E, rv_idx, Q_m)
     % f_interleaved      : Vetor final transmitido | Final Transmitted Sequence (Size E)
     %% =========================================================================
 
+    % PT: Declara a variável persistente que retém o estado na memória da função
+    % EN: Declares the persistent variable that retains state in the function memory
+    persistent attempt;
+
+    rv_sequency = [0,2,3,1];
+
+    % PT: Se for a primeira execução ou o bloco anterior passou, começa do RV0 (tentativa 1)
+    % EN: If it is the first run or the previous block passed, start from RV0 (attempt 1)
+
+
+    %%Sucess is for control,if the codeword sent is missing
+    %%information,receptor send sucesss = false
+    if isempty(attempt) || success
+        attempt = 1;
+    else
+        attempt = attempt + 1;
+        if attempt > 4
+            warning("HARQ:Limit of retransmissions.Restarting pack");
+            attempt = 1;
+        end
+    end
+    
+    % PT: Extrai o RV automático correspondente à tentativa atual
+    % EN: Extracts the automatic RV corresponding to the current attempt
+    rv_idx = rv_sequency(attempt);
+
+    
     %% 1. Puncturing Fixo | Standard puncturing defined by 3GPP (Subclause 5.4.2.1)
     % PT: Deleta os primeiros 2*Zc bits da palavra-código original
     % EN: Deletes the first 2*Zc bits of the original codeword

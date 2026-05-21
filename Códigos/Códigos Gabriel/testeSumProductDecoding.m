@@ -51,7 +51,18 @@ m = geradormessage(tamanho_pacote);
 %Codifico a palavra
 palavra_codigo = GeradorPalavraCodigo(m,G);
 
-disp(palavra_codigo);
+disp('======================================================');
+disp(' CONFIGURAÇÃO DA ANTENA (RATE MATCHING)');
+disp('======================================================');
+
+E = input("Qual o tamanho do buffer da antena (E)? ");
+Q_m = input("Qual a ordem de modulação (ex: 4 para 16-QAM)? ");
+
+disp('Processando Puncturing, Seleção e Interleaving...');
+palavra_codigo_final = RateMatching(palavra_codigo, opcao_bg, Zc, E, Q_m, true);
+fprintf("Vetor final pronto - Tamanho : %d bits\n",length(palavra_codigo_final));
+
+return;
 
 
 % 2. Vetor LLR de entrada calculado
