@@ -1,0 +1,61 @@
+function f_interleaved = RateMatching(c,BG,Zc,E,rv_idx,Q_m)
+
+    %%Standard puncturing definied by 3GPP
+     StandardPuncturing = 2*Zc;
+
+    c(1:StandardPuncturing) = [];
+
+    d= c;
+
+    %%Circular_buffer lenght
+    N_cb = length(d);
+
+    if BG == 1
+        switch rv_idx
+            case 0, k0 = 0;
+            case 1, k0 = floor((17 * N_cb) / (66 * Zc)) * Zc;
+            case 2, k0 = floor((33 * N_cb) / (66 * Zc)) * Zc;
+            case 3, k0 = floor((56 * N_cb) / (66 * Zc)) * Zc;
+        end
+    elseif BG == 2
+        switch rv_idx
+        case 0, k0 = 0;
+            case 1, k0 = floor((13 * N_cb) / (50 * Zc)) * Zc;
+            case 2, k0 = floor((25 * N_cb) / (50 * Zc)) * Zc;
+            case 3, k0 = floor((43 * N_cb) / (50 * Zc)) * Zc;
+        end
+
+    else
+        error("Invalid Base Graph")
+    end
+
+    %%Bit Selection
+    e_k = zeros(1,E)
+    k = 0;
+    j = 0;
+    while(k<E)
+        %%Circular index
+        index = mod(k0 + j,N_cb) + 1;
+
+        %%Skip filler bits
+        if d(index) ~= -1
+            e_k(k+1) = d(index);
+            k = k + 1;
+        end
+        j = j + 1; % Increment the circular index
+    end
+                            
+
+   
+   if mod(E,Q_m) ~= 0
+       error("Error : E size must be multiple of Q_m order")
+   end
+
+   %%Bit interleaving
+
+   f_interleaved = reshape(e_k,E / Q_m,Q_m);
+
+   
+
+  end
+            
