@@ -10,7 +10,7 @@ k = n - m;
 
 %Divisão da matriz H recebida em dois blocos(Matrizes)
 % Dividir a matriz H em dois blocos(A == bits de informação,B = matriz quadrada,bits de paridade)
-display("Gerando G,pode demorar apra Zc maiores")
+display("Gerando G,pode demorar para Zc maiores")
 A = H(:,1:k);
 B = H(:,k+1:n);
 
