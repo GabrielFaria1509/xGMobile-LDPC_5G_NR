@@ -8,7 +8,7 @@ function [u, F] = FillerBits(mensagem, G)
         F = k_G - B;
         
         if F < 0
-            error("O pacote é maior que a matriz. Aumente o Zc.");
+            error("The pack is larger than the matrix. Increase o Zc.");
         end
         
         filler_bits = -1*ones(1, F); % Vetor para concatenar na mensagem

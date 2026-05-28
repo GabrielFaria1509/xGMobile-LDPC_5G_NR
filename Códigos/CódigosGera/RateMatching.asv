@@ -103,21 +103,18 @@ function f_interleaved = RateMatching(c, BG, Zc, E,Q_m,success)
         j = j + 1; 
     end
 
-
+    
                             
     %% 4. Entrelaçamento de Bits | Bit interleaving (Subclause 5.4.2.2)
     % PT: Verifica se o tamanho E é divisível pela modulação
     % EN: Checks if size E is divisible by the modulation order
-    BitsPerSymbol = log2(Q_m);
-    
-    
-    if mod(E,BitsPerSymbol) ~= 0
+    if mod(E, Q_m) ~= 0
         error("Erro: E deve ser múltiplo de Q_m | Error: E must be multiple of Q_m");
     end
     
     % PT: Molda em matriz (preenchimento por coluna) e transpõe (.' ) para forçar preenchimento por linha
     % EN: Reshapes into matrix (column-major) and transposes (.' ) to force row-major filling
-    interleaved_matrix = reshape(e_k,BitsPerSymbol, E /BitsPerSymbol).';
+    interleaved_matrix = reshape(e_k, Q_m, E / Q_m).';
     
     % PT: Planifica a matriz (:) lendo por colunas e transpõe (.' ) para vetor linha horizontal
     % EN: Flattens the matrix (:) reading by columns and transposes (.' ) to horizontal row vector
