@@ -6,7 +6,8 @@ function f_interleaved = RateMatching(c, BG, Zc, E,Q_m,success)
     % c        : Palavra-código original do LDPC | Original LDPC codeword (with -1 as <NULL>)
     % BG       : Grafo Base (1 ou 2) | Base Graph (1 or 2)
     % Zc       : Tamanho do Lifting | Lifting Size (Expansion factor)
-    % E        : Tamanho exato da saída | Exact output sequence length (Antenna capacity)
+    % E        : capacidade máxima do recurso físico  |  Maximal physical
+    % resource
     % rv_idx   : Índice de Redundância (0 a 3) | Redundancy Version Index (0 to 3) for HARQ
     % Q_m      : Ordem de Modulação | Modulation Order (e.g., 2=QPSK, 4=16QAM)
     %
