@@ -5,8 +5,8 @@ function d = ModulatorScramble(Qm,f_interleaved,n_RNTI,n_ID)
  %Qm:Ordem de modulação|Modulation order
  %f_interleaved:codeword após processo de rate matching|codeword after
  %rate matching process
- % n_RNTI:Radio Network Temporary Identifier (ID do usuário)
- % n_ID:Physical layer cell identity (ID da antena)
+ % n_RNTI:ID temporário do utilizador na rede|Radio Network Temporary Identifier 
+ % n_ID:ID da camada da célula física |Physical layer cell identity 
  %%q:índice da palavra-código|codeword index
  %%E:Recurso físico máximo ou extensão final codeword|Maximal physical
  %%resource or final codeword lenght
