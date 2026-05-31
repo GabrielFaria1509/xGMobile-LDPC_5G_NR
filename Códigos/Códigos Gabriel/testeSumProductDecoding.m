@@ -62,6 +62,11 @@ disp('Processando Puncturing, Seleção e Interleaving...');
 palavra_codigo_final = RateMatching(palavra_codigo, opcao_bg, Zc, E, Q_m, true);
 fprintf("Vetor final pronto - Tamanho : %d bits\n",length(palavra_codigo_final));
 
+
+disp('Iniciando processo de modulação e embaralhamento');
+sinal_modulado = ModulatorScramble(Q_m,palavra_codigo_final,1,1);
+disp(sinal_modulado);
+
 return;
 
 
