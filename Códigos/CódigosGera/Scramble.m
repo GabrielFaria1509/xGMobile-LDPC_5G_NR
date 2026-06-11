@@ -1,4 +1,4 @@
-function d = ModulatorScramble(Qm,f_interleaved,n_RNTI,n_ID)
+function scramble_message = Scramble(f_interleaved,n_RNTI,n_ID)
 
  %% DICIONÁRIO DE VARIÁVEIS | VARIABLE LEGEND (3GPP TS 38.212)
  
@@ -35,16 +35,11 @@ gold_gen = comm.GoldSequence( ...
      'Index', 1600, ...
      'SamplesPerFrame', E);
 
-% 3. Geração do ruído pseudoaleatório c(n)|Genrating the pseudorandom noise
 
 c_sequence = gold_gen().';
 
-scramble_bits = bitxor(f_interleaved,c_sequence);
+scramble_message = bitxor(f_interleaved,c_sequence);
 
-%%QAM modulation
-sym_idx = bi2de(reshape(scramble_bits, Qm, []).', 'left-msb');
-d = qammod(sym_idx, 2^Qm, 'UnitAveragePower', true);
-    
 end
 
 
