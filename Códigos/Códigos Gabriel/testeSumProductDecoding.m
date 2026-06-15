@@ -48,15 +48,16 @@ tamanho_pacote = input("Qual tamanho da mensagem ? ");
 m = geradormessage(tamanho_pacote);
 
 
-%Codifico a palavra
+%Codifico a palavra e inserção filler bits
 palavra_codigo = GeradorPalavraCodigo(m,G);
 
 disp('======================================================');
 disp(' CONFIGURAÇÃO DA ANTENA (RATE MATCHING)');
 disp('======================================================');
 
-E = input("Qual a capacidade máxima do recurso físico ?  (E)? ");
+E = input("Qual a capacidade máxima do recurso físico(E)? ");
 Q_m = input("Qual a ordem de modulação ?  (2 -BPSK , 4 -QPSK ,8 QAM ...)? ");
+
 
 disp('Processando Puncturing, Seleção e Interleaving...');
 palavra_codigo_final = RateMatching(palavra_codigo, opcao_bg, Zc, E, Q_m, true);
@@ -64,9 +65,12 @@ fprintf("Vetor final pronto - Tamanho : %d bits\n",length(palavra_codigo_final))
 
 
 disp('Iniciando processo de modulação e embaralhamento');
-sinal_modulado = ModulatorScramble(Q_m,palavra_codigo_final,1,1);
-disp(sinal_modulado);
+SNR = 1;
+sinal_modulado = ModulatorProcess(palavra_codigo_final,Q_m,SNR);
+fprintf("Sinal recebido e modulado : ",sinal_modulado);
+sinal_recebido = ReceiverEntry(sinal_modulado,Q_m,SNR);
 
+fprintf("Sinal receido pelo receptor após demodulação: ",sinal_recebido);
 return;
 
 
