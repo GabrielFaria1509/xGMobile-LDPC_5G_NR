@@ -1,4 +1,4 @@
-function BG = GeradorBG(opcao_bg, Zc)
+function BG = baseGraph_generator(opcao_bg, Zc)
 %inputs:
 %opcao_bg: qual base graph esolhido (1 ou 2)
 %Zc: lifiting size

@@ -1,4 +1,4 @@
-function [u, F] = FillerBits(mensagem, G)
+function [u, F] = filler_bits(mensagem, G)
     % Extraio capacidade de informação da matriz G
     k_G = height(G);
     

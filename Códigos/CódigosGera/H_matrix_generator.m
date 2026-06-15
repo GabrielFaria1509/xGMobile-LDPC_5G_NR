@@ -1,4 +1,4 @@
-function H = GeradorH(BG, Zc)
+function H = H_matrix_generator(BG, Zc)
     [m, n] = size(BG);
     
     %Cria a matriz H vazia
