@@ -1,4 +1,4 @@
-function z = Sum_Product_Decoding(H, r, I_maximo)
+function z = sum_product_decoding(H, r, I_maximo)
     [m, n] = size(H);
     
     B = cell(1,m);
