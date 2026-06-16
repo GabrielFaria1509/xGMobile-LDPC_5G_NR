@@ -1,4 +1,4 @@
-function f_interleaved = RateMatching(c, BG, Zc, E,Q_m,success)
+function f_interleaved = RateMatching(c, BG, Zc, E,Q_m,first)
     %% =========================================================================
     %% DICIONÁRIO DE VARIÁVEIS | VARIABLE LEGEND (3GPP TS 38.212)
     %% =========================================================================
@@ -35,7 +35,7 @@ function f_interleaved = RateMatching(c, BG, Zc, E,Q_m,success)
 
     %%Sucess is for control,if the codeword sent is missing
     %%information,receptor send sucesss = false
-    if isempty(attempt) || success
+    if isempty(attempt) || first
         attempt = 1;
     else
         attempt = attempt + 1;
@@ -108,7 +108,7 @@ function f_interleaved = RateMatching(c, BG, Zc, E,Q_m,success)
     %% 4. Entrelaçamento de Bits | Bit interleaving (Subclause 5.4.2.2)
     % PT: Verifica se o tamanho E é divisível pela modulação
     % EN: Checks if size E is divisible by the modulation order
-    BitsPerSymbol = log2(Q_m);
+    BitsPerSymbol = Q_m;
     
     
     if mod(E,BitsPerSymbol) ~= 0
