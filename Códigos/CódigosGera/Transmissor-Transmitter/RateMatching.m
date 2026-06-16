@@ -1,4 +1,4 @@
-function f_interleaved = RateMatching(c, BG, Zc, E,Q_m,first)
+function [f_interleaved, e_k] = RateMatching(c, BG, Zc, E,Q_m,first)
     %% =========================================================================
     %% DICIONÁRIO DE VARIÁVEIS | VARIABLE LEGEND (3GPP TS 38.212)
     %% =========================================================================

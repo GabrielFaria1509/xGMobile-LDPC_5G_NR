@@ -6,9 +6,9 @@ function llr_signal = derate_matching(demodulated_signal, BG, Zc, Q_m, TBS, Rv)
     num_rows = Q_m;
     num_cols = E / Q_m;
     
-    interleaved_matrix = reshape(demodulated_signal, num_rows, num_cols);
+    reshaped = reshape(demodulated_signal, num_cols, num_rows);
     
-    transposed_matrix = interleaved_matrix.';
+    transposed_matrix = reshaped.';
     llr_signal = transposed_matrix(:).';
 
 
