@@ -1,4 +1,4 @@
-function llr_signal = derate_matching(demodulated_signal, BG, Zc, Q_m, TBS, rv_idx)
+function llr_signal = derate_matching(demodulated_signal, BG, Zc, Q_m, TBS, attempt)
 
 %desfazazer o interleaving
 
@@ -11,6 +11,9 @@ function llr_signal = derate_matching(demodulated_signal, BG, Zc, Q_m, TBS, rv_i
     transposed_matrix = reshaped.';
     llr_signal = transposed_matrix(:).';
 
+
+    rv_sequency = [0,2,3,1];
+    rv_idx = rv_sequency(attempt);
 
 %Criar um vetor de zeros tamanho N_cb
     if BG == 1

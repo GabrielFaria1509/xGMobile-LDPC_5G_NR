@@ -1,4 +1,4 @@
-function f_interleaved = RateMatching(c, BG, Zc, E,Q_m,first)
+function f_interleaved = RateMatching(c, BG, Zc, E,Q_m,attempt)
     %% =========================================================================
     %% DICIONÁRIO DE VARIÁVEIS | VARIABLE LEGEND (3GPP TS 38.212)
     %% =========================================================================
@@ -23,27 +23,11 @@ function f_interleaved = RateMatching(c, BG, Zc, E,Q_m,first)
     % f_interleaved      : Vetor final transmitido | Final Transmitted Sequence (Size E)
     %% =========================================================================
 
-    % PT: Declara a variável persistente que retém o estado na memória da função
-    % EN: Declares the persistent variable that retains state in the function memory
-    persistent attempt;
+ 
 
     rv_sequency = [0,2,3,1];
 
-    % PT: Se for a primeira execução ou o bloco anterior passou, começa do RV0 (tentativa 1)
-    % EN: If it is the first run or the previous block passed, start from RV0 (attempt 1)
 
-
-    %%Sucess is for control,if the codeword sent is missing
-    %%information,receptor send sucesss = false
-    if isempty(attempt) || first
-        attempt = 1;
-    else
-        attempt = attempt + 1;
-        if attempt > 4
-            warning("HARQ:Limit of retransmissions.Restarting pack");
-            attempt = 1;
-        end
-    end
     
     % PT: Extrai o RV automático correspondente à tentativa atual
     % EN: Extracts the automatic RV corresponding to the current attempt
