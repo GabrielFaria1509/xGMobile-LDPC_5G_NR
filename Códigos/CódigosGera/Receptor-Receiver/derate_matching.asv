@@ -16,7 +16,7 @@ function llr_signal = derate_matching(demodulated_signal, BG, Zc, Q_m, TBS, rv_i
     if BG == 1
         %tamanho do buffer para BG1 já sem os primeiros 2*Zc
         N_cb = Zc*66;
-        filler_bits = 20*Zc - TBS;
+        filler_bits = 22*Zc - TBS;
 
         switch rv_idx
             case 0, k0 = 0;
@@ -39,18 +39,17 @@ function llr_signal = derate_matching(demodulated_signal, BG, Zc, Q_m, TBS, rv_i
     buffer = zeros(1, N_cb);
 
     if filler_bits ~= 0
-        filler_low = (TBS + 1) - 2*Zc;
-        filler_high = (TBS + filler_bits) - 2*Zc;
+        filler_low = TBS + 1;
+        filler_high = TBS + filler_bits;
     end
     i = 1;
     j = 0;
-    while(i <= E)
+    while(i < E)
         index = mod(k0 + j, N_cb) + 1;
 
-        if (index >= filler_low) && (index <= filler_high)
-            buffer(index) = 100;
-            j = j + 1; 
-            continue;
+        while ((filler_low<=index)&&(index<=filler_high))
+            j = j+1;
+            index = mod(k0 + j, N_cb) + 1;
         end
         buffer(index) = buffer(index)+llr_signal(i);
         i = i + 1;
@@ -58,7 +57,6 @@ function llr_signal = derate_matching(demodulated_signal, BG, Zc, Q_m, TBS, rv_i
     end
 
     llr_signal = buffer;
-    llr_signal = [zeros(1,2*Zc), llr_signal];
 %Você lê o primeiro bit do seu vetor desentrelaçado (Passo 1).
 
 %Você olha para o buffer: Essa posição seria um filler bit (-1)?
