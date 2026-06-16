@@ -2,7 +2,8 @@ function [BG, Zc_selected] = BG_Zc_Identifier(A, CodeRate, K)
     %% K = Length of the received message including CRC verification bits
     %% Kb = Maximum number of columns in the matrix that contain useful information.
     %% Zc_min = Minimum Zc possible
-    %% A = Length of the original code block
+    %% A = Length of the original code block(TBS)
+    
     
     if A <= 292 || (A <= 3824 && CodeRate <= 0.67) || CodeRate <= 0.25
         BG = 2;
