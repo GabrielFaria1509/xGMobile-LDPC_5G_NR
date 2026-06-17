@@ -1,4 +1,4 @@
-function [BG_number, Kb] = Base_Graph_selector(A, R)
+function BG_number = Base_Graph_selector(A, R)
     %Recebe o valor B (Numero de bits da mensagem útil + CRC)
     %Recebe R (Valor do code rate esperado)
     %Devolve o número do BaseGraph
@@ -11,10 +11,7 @@ function [BG_number, Kb] = Base_Graph_selector(A, R)
         BG_number = 2;
     else
         BG_number = 1;
-        Kb = 22;
     end
-
-    
 
     
     

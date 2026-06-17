@@ -1,7 +1,7 @@
-function llr_signal = derate_matching(demodulated_signal, BG, Zc, Q_m, B, attempt, buffer)
+function llr_signal = derate_matching(demodulated_signal, BG_number, Zc, Q_m, B, attempt, buffer)
     arguments
         demodulated_signal
-        BG
+        BG_number
         Zc
         Q_m
         B
@@ -44,7 +44,7 @@ function llr_signal = derate_matching(demodulated_signal, BG, Zc, Q_m, B, attemp
     rv_idx = rv_sequency(attempt);
     
     %% 3. BUFFER INITIALIZATION & STARTING POINT (k0) / INICIALIZAÇÃO DO BUFFER E PONTO DE PARTIDA (k0)
-    if BG == 1
+    if BG_number == 1
         % Buffer size for BG1 excluding the first 2*Zc bits
         % Tamanho do buffer para BG1 já sem os primeiros 2*Zc bits
         N_cb = Zc * 66;
@@ -59,7 +59,7 @@ function llr_signal = derate_matching(demodulated_signal, BG, Zc, Q_m, B, attemp
             case 2, k0 = floor((33 * N_cb) / (66 * Zc)) * Zc;
             case 3, k0 = floor((56 * N_cb) / (66 * Zc)) * Zc;
         end
-    elseif BG == 2
+    elseif BG_number == 2
         N_cb = Zc * 50;
         
         % Observação: Kb fixado em 10 temporariamente (idealmente varia com A)
@@ -73,9 +73,15 @@ function llr_signal = derate_matching(demodulated_signal, BG, Zc, Q_m, B, attemp
     end
     
     % Initialize buffer with neutral LLRs (0) / Inicializa o buffer com LLRs neutros (0)
-    if buffer == -1
+    if isscalar(buffer) && buffer == -1
+        % Primeira tentativa: Inicializa o buffer estritamente com tamanho N_cb
         buffer = zeros(1, N_cb);
+    else
+        % Tentativas seguintes (HARQ): O buffer veio inflado com os 2*Zc zeros na frente.
+        % Cortamos a cabeça do vetor para restaurar o tamanho exato de N_cb.
+        buffer = buffer((2 * Zc) + 1 : end);
     end
+
     
     %% 4. FILLER BITS POSITIONS / POSIÇÕES DOS BITS DE PREENCHIMENTO
     % Determines where the <NULL> bits were placed during encoding.
@@ -90,6 +96,7 @@ function llr_signal = derate_matching(demodulated_signal, BG, Zc, Q_m, B, attemp
         % Deslocado em 2*Zc porque as primeiras 2 colunas foram puncionadas
         filler_low = (B + 1) - 2 * Zc;
         filler_high = (B + filler_bits) - 2 * Zc;
+        buffer(filler_low : filler_high) = 100; 
     end
     
     %% 5. CIRCULAR BUFFER WRITING / ESCRITA NO BUFFER CIRCULAR
@@ -103,9 +110,6 @@ function llr_signal = derate_matching(demodulated_signal, BG, Zc, Q_m, B, attemp
         
         % If this position is a filler bit / Se esta posição for um filler bit
         if (index >= filler_low) && (index <= filler_high)
-            % Assign infinite certainty for bit 0 (LLR = +100)
-            % Atribui certeza infinita para o bit 0 (LLR = +100)
-            buffer(index) = 100;
             j = j + 1; 
             continue; % Skip using a channel LLR / Pula sem usar um LLR do canal
         end
