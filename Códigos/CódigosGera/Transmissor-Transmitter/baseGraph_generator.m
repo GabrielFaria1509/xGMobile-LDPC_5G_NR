@@ -5,10 +5,10 @@ function BG = baseGraph_generator(opcao_bg, Zc)
 
 
     %Tabela com os set index de acordo com o Zc
-    Tabela = readtable('set.csv');
+    table = readtable('set.csv');
 
 
-    set_possiveis = Tabela(Tabela.lifting == Zc, :);
+    set_possiveis = table(table.lifting == Zc, :);
     if isempty(set_possiveis)
         error("Lifting size fora do padrão")
     end

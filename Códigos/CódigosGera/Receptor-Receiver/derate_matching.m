@@ -1,4 +1,13 @@
-function llr_signal = derate_matching(demodulated_signal, BG, Zc, Q_m, TBS, attempt)
+function llr_signal = derate_matching(demodulated_signal, BG, Zc, Q_m, B, attempt, buffer)
+    arguments
+        demodulated_signal
+        BG
+        Zc
+        Q_m
+        B
+        attempt
+        buffer = -1
+    end
     %% DE-RATE MATCHING PROCESS (3GPP TS 38.212)
     % Reconstructs the circular buffer and prepends punctured bits.
     % Reconstroi o buffer circular e adiciona os bits puncionados.
@@ -42,7 +51,7 @@ function llr_signal = derate_matching(demodulated_signal, BG, Zc, Q_m, TBS, atte
         
         %%Kb is exactly 22 for BG1. Total capacity is 22*Zc.
         %%Kb é exatamente 22 para o BG1. A capacidade total é 22*Zc.
-        filler_bits = 22 * Zc - TBS; 
+        filler_bits = 22 * Zc - B; 
         
         switch rv_idx
             case 0, k0 = 0;
@@ -54,7 +63,7 @@ function llr_signal = derate_matching(demodulated_signal, BG, Zc, Q_m, TBS, atte
         N_cb = Zc * 50;
         
         % Observação: Kb fixado em 10 temporariamente (idealmente varia com A)
-        filler_bits = 10 * Zc - TBS;
+        filler_bits = 10 * Zc - B;
         switch rv_idx
             case 0, k0 = 0;
             case 1, k0 = floor((13 * N_cb) / (50 * Zc)) * Zc;
@@ -64,7 +73,9 @@ function llr_signal = derate_matching(demodulated_signal, BG, Zc, Q_m, TBS, atte
     end
     
     % Initialize buffer with neutral LLRs (0) / Inicializa o buffer com LLRs neutros (0)
-    buffer = zeros(1, N_cb);
+    if buffer == -1
+        buffer = zeros(1, N_cb);
+    end
     
     %% 4. FILLER BITS POSITIONS / POSIÇÕES DOS BITS DE PREENCHIMENTO
     % Determines where the <NULL> bits were placed during encoding.
@@ -77,8 +88,8 @@ function llr_signal = derate_matching(demodulated_signal, BG, Zc, Q_m, TBS, atte
     if filler_bits ~= 0
         % Offset by 2*Zc because the first 2 columns are punctured
         % Deslocado em 2*Zc porque as primeiras 2 colunas foram puncionadas
-        filler_low = (TBS + 1) - 2 * Zc;
-        filler_high = (TBS + filler_bits) - 2 * Zc;
+        filler_low = (B + 1) - 2 * Zc;
+        filler_high = (B + filler_bits) - 2 * Zc;
     end
     
     %% 5. CIRCULAR BUFFER WRITING / ESCRITA NO BUFFER CIRCULAR

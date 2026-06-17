@@ -1,12 +1,12 @@
-function rx_signal = ModulatorProcess(f_interleaved,Qm,SNR)
+function rx_signal = ModulatorProcess(f_interleaved,Q_m,SNR)
 
 %%Modulation process
 
 %%It groups the bits and converts them to decimal.
-f_interleaved = bi2de(reshape(f_interleaved,Qm,[]).',"left-msb");
+f_interleaved = bi2de(reshape(f_interleaved,Q_m,[]).',"left-msb");
 
 %%Modualting 
-modulated_word = qammod(f_interleaved,2^Qm,'UnitAveragePower', true);
+modulated_word = qammod(f_interleaved,2^Q_m,'UnitAveragePower', true);
 
 %%SNR construction process
 E = 1;
@@ -21,6 +21,8 @@ awgn = sigma*(randn(size(modulated_word)) + 1j*randn(size(modulated_word)));
 
 %%Signal received 
 rx_signal = awgn + modulated_word;
+
+rx_signal = rx_signal.';
 
 
 

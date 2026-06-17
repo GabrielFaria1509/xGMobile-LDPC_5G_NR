@@ -1,4 +1,4 @@
-function f_interleaved = RateMatching(c, BG, Zc, E,Q_m,attempt)
+function f_interleaved = RateMatching(c, BG_number, Zc, E,Q_m,attempt)
     %% =========================================================================
     %% DICIONÁRIO DE VARIÁVEIS | VARIABLE LEGEND (3GPP TS 38.212)
     %% =========================================================================
@@ -48,14 +48,14 @@ function f_interleaved = RateMatching(c, BG, Zc, E,Q_m,attempt)
     
     % PT: Define o ponto de partida (k0) baseado na Redundancy Version (RV)
     % EN: Defines the starting position (k0) based on the Redundancy Version (RV)
-    if BG == 1
+    if BG_number == 1
         switch rv_idx
             case 0, k0 = 0;
             case 1, k0 = floor((17 * N_cb) / (66 * Zc)) * Zc;
             case 2, k0 = floor((33 * N_cb) / (66 * Zc)) * Zc;
             case 3, k0 = floor((56 * N_cb) / (66 * Zc)) * Zc;
         end
-    elseif BG == 2
+    elseif BG_number == 2
         switch rv_idx
             case 0, k0 = 0;
             case 1, k0 = floor((13 * N_cb) / (50 * Zc)) * Zc;
