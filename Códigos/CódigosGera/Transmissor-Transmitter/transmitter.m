@@ -1,4 +1,4 @@
-    function [final_message_modulated, BG_number, Zc, B, c, H] = transmitter(message, R, E, Q_m, SNR)
+    function [final_message_modulated, final_message_modulated2, BG_number, Zc, B, c, H] = transmitter(message, R, E, Q_m, SNR)
         A = length(message);
     
         CRC = simulador_crc(A);
@@ -17,6 +17,9 @@
         c = codeword_generator(msg_filler, G);
     
         rate_matched = RateMatching(c,BG_number, Zc, E, Q_m, 1);
+        rate_matched2 = RateMatching(c,BG_number, Zc, E, Q_m, 2);
+
     
         final_message_modulated = ModulatorProcess(rate_matched, Q_m, SNR);
+        final_message_modulated2 = ModulatorProcess(rate_matched2, Q_m, SNR);
   
