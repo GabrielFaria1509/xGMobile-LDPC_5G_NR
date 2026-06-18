@@ -1,5 +1,5 @@
 %%Gerador da matriz G
-function G = GeradorG(H)
+function G = G_matrix_generator(H)
 %Inicializa dimensões da matriz
 
 H = full(H);%função gf só aceita matriz cheia,não sparse
