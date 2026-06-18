@@ -1,5 +1,6 @@
 %%Gerador da matriz G
-function G = GeradorG(H)
+function G = G_matrix_generator(H, Zc)
+tic
 %Inicializa dimensões da matriz
 
 H = full(H);%função gf só aceita matriz cheia,não sparse
@@ -26,6 +27,7 @@ I = speye(k); %matriz identidade esparsa do tamanho da mensagem
 G = [I,P']; % Combina a matriz identidade com a matriz de paridade
 %apostrófe indica transposta,vírgula junta matriz lado a lado
 
+tempo = toc
 end
 
 
