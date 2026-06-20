@@ -20,6 +20,8 @@ fprintf('--- INICIANDO SIMULAÇÃO 5G xGMobile ---\n');
 
 A = input("Digite o tamanho da mensagem a ser enviada : "); % Tamanho da mensagem original (bits)
 msg_original = message_generator(A);
+disp("Mensagem gerada : ")
+disp(msg_original);
 
 fprintf('\n[TX] Transmitindo pacotes (Gerando os  RV simultaneamente)...\n');
 [rx_1, rx_2, rx_3, rx_4, BG, Zc, B, c, H] = transmitter(msg_original, R, E, Q_m, SNR_dB);
@@ -59,6 +61,7 @@ for attempt = 1 : 4
     if erros == 0
         fprintf('\n   [✅ SUCESSO] Mensagem recuperada PERFEITAMENTE na tentativa %d!\n', attempt);
         sucesso = true;
+        display(mensagem_recuperada);
         break;
     else
          fprintf('   [❌ FALHA] Foram encontrados %d bits errados.\n', erros);
