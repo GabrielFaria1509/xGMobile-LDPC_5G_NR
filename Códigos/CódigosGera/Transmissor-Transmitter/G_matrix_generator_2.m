@@ -10,7 +10,7 @@ k = n - m;
 
 %Divisão da matriz H recebida em dois blocos(Matrizes)
 % Dividir a matriz H em dois blocos(A == bits de informação,B = matriz quadrada,bits de paridade)
-display("Gerando G,pode demorar para Zc maiores")
+disp("Gerando G,pode demorar para Zc maiores")
 A = H(:,1:k);
 B = H(:,k+1:n);
 
@@ -36,5 +36,7 @@ P2 = mod(A2 + B2 * P1, 2);
 P = [P1; P2];
 I = speye(k); %matriz identidade esparsa do tamanho da mensagem
 G = [I,P']; % Combina a matriz identidade com a matriz de paridade
-tempo = toc
+spy(G);
+tempo = toc;
+fprintf('Tempo gasto : %d',tempo);
 end

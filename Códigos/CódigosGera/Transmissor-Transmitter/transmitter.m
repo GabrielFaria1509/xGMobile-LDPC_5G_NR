@@ -11,7 +11,7 @@ function [final_message_modulated, final_message_modulated2, final_message_modul
         BG = baseGraph_generator(BG_number, Zc);
     
         H = H_matrix_generator(BG, Zc);
-        G = G_matrix_generator(H);
+        G = G_matrix_generator_2(H,Zc);
     
         msg_filler = filler_bits(msg_crc, G);
         c = codeword_generator(msg_filler, G);
