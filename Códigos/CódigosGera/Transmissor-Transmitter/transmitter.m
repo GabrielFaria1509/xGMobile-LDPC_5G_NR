@@ -1,7 +1,8 @@
 function [final_message_modulated, final_message_modulated2, final_message_modulated3, final_message_modulated4,BG_number, Zc, B, c, H] = transmitter(message, R, E, Q_m, SNR)
         A = length(message);
     
-        CRC = simulador_crc(A);
+        
+        CRC = crc_generator(A);
         msg_crc = [message, CRC];
     
         B = A + length(CRC);
