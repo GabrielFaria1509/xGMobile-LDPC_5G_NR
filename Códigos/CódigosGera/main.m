@@ -13,11 +13,11 @@ addpath(genpath(pwd));
 R = 1/2;           % Taxa de Código Alvo (Code Rate)
 E = 250;           % Recursos físicos máximo(Maximal physical resource)
 Q_m = 2;           % Ordem de Modulação (2 = QPSK)
-<<<<<<< HEAD
+
 SNR_dB = 1;       % Relação Sinal-Ruído(Relação Sinal-Ruído)
-=======
+
 SNR_dB = 4;       % Relação Sinal-Ruído(Relação Sinal-Ruído)
->>>>>>> 3f5861da4425fec3f69423e05f17514f20a21354
+
 
 fprintf('\n======================================================\n');
 fprintf('--- INICIANDO SIMULAÇÃO 5G xGMobile ---\n');
