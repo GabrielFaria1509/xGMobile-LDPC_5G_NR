@@ -14,8 +14,6 @@ R = 1/2;           % Taxa de Código Alvo (Code Rate)
 E = 250;           % Recursos físicos máximo(Maximal physical resource)
 Q_m = 2;           % Ordem de Modulação (2 = QPSK)
 
-SNR_dB = 1;       % Relação Sinal-Ruído(Relação Sinal-Ruído)
-
 SNR_dB = 4;       % Relação Sinal-Ruído(Relação Sinal-Ruído)
 
 
