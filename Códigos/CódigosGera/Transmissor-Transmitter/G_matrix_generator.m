@@ -1,5 +1,5 @@
 %%Gerador da matriz G
-function G = G_matrix_generator(H, Zc)
+function G = G_matrix_generator(H)
 tic
 %Inicializa dimensões da matriz
 

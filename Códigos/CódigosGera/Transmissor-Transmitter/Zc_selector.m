@@ -1,4 +1,4 @@
-function Zc = Zc_selector(B, BG_number)
+function [Zc,Kb] = Zc_selector(B, BG_number)
     %Tabela com os set index de acordo com o Zc
     table = readtable('set.csv');
 
