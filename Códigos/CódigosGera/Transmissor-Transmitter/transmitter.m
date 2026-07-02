@@ -8,6 +8,7 @@ function [final_message_modulated, final_message_modulated2, final_message_modul
         B = A + length(CRC);
     
         BG_number = Base_Graph_selector(A, R);
+        
         Zc = Zc_selector(B,BG_number);
         BG = baseGraph_generator(BG_number, Zc);
     
