@@ -8,9 +8,9 @@ addpath(genpath(pwd));
 
 %%%% 1. PARÂMETROS DO SISTEMA
 R = 1/2;           % Taxa de Código Alvo (Code Rate)
-E = 15000;         % Aumentei o E para suportar testes com mensagens maiores
+E = 15000;         
 Q_m = 2;           % Ordem de Modulação (2 = QPSK)
-SNR_dB = 10;       % Relação Sinal-Ruído (Coloquei 10 para o gráfico ficar bonito)
+SNR_dB = 10;       % Relação Sinal-Ruído 
 
 fprintf('\n======================================================\n');
 fprintf('--- TESTE DE PIPELINE: TRANSMISSOR 5G xGMobile ---\n');
@@ -21,12 +21,12 @@ fprintf('======================================================\n');
 % Digite 10000 para forçar a segmentação e ver ele dividir em blocos (C > 1).
 A = input("Digite o tamanho da mensagem a ser enviada (em bits): "); 
 
-% Gera a mensagem original usando a sua função
+
 msg_original = message_generator(A);
 
 fprintf('\n[TX] Processando pipeline (Segmentação, CRC, Filler, LDPC, Rate Matching)...\n');
 
-% Chama o transmissor com a nova arquitetura
+
 [rx_1, rx_2, rx_3, rx_4, C, BG, Zc, B, H] = transmitterteste(msg_original, R, E, Q_m, SNR_dB);
 
 %% ========================================================================
