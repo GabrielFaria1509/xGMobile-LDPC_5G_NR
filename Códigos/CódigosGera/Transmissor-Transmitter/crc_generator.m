@@ -1,5 +1,7 @@
 function CRC = crc_generator(message,crc_option)
 
+     message = message(:).';
+
      A = length(message);
 
 

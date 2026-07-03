@@ -33,11 +33,23 @@ function f_interleaved = RateMatching(c, BG_number, Zc, E,Q_m,attempt)
     % EN: Extracts the automatic RV corresponding to the current attempt
     rv_idx = rv_sequency(attempt);
 
+
+    c = c(:).';
+
     
     %% 1. Puncturing Fixo | Standard puncturing defined by 3GPP (Subclause 5.4.2.1)
     % PT: Deleta os primeiros 2*Zc bits da palavra-código original
     % EN: Deletes the first 2*Zc bits of the original codeword
     StandardPuncturing = 2 * Zc;
+
+
+    % Trava de Segurança: Verifica se o vetor não está vazio por erro anterior
+    if length(c) < StandardPuncturing
+        error('CRÍTICO: O codeword chegou com %d bits. Deveria ter pelo menos %d! Verifique o codeword_generator.', length(c), StandardPuncturing);
+    end
+   
+
+
     c(1:StandardPuncturing) = [];
     d = c;
     
