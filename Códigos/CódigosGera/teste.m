@@ -9,8 +9,8 @@ addpath(genpath(pwd));
 %%%% 1. PARÂMETROS DO SISTEMA
 R = 1/2;           % Taxa de Código Alvo (Code Rate)
 E = 15000;         
-Q_m = 2;           % Ordem de Modulação (2 = QPSK)
-SNR_dB = 10;       % Relação Sinal-Ruído 
+Q_m = 4;           % Ordem de Modulação (2 = QPSK)
+SNR_dB = 5;       % Relação Sinal-Ruído 
 
 fprintf('\n======================================================\n');
 fprintf('--- TESTE DE PIPELINE: TRANSMISSOR 5G xGMobile ---\n');
@@ -30,7 +30,7 @@ fprintf('\n[TX] Processando pipeline (Segmentação, CRC, Filler, LDPC, Rate Mat
 [rx_1, rx_2, rx_3, rx_4, C, BG, Zc, B, H] = transmitterteste(msg_original, R, E, Q_m, SNR_dB);
 
 %% ========================================================================
-%% SAÍDAS DE VERIFICAÇÃO E DEBUG
+%% TRANSMISSOR
 %% ========================================================================
 fprintf('\n================ RELATÓRIO DO TRANSMISSOR ================\n');
 fprintf('Tamanho da carga útil (A)        : %d bits\n', A);
@@ -49,22 +49,9 @@ if length(rx_1) == floor(tamanho_esperado) || length(rx_1) == ceil(tamanho_esper
     fprintf('[✅ SUCESSO] O Rate Matching e a Modulação alinharam perfeitamente com os recursos (E)!\n');
 else
     fprintf('[❌ ALERTA] O tamanho gerado (%d) não bate com o esperado (%d).\n', length(rx_1), tamanho_esperado);
+    fprintf('==========================================================\n');
 end
-fprintf('==========================================================\n');
 
-%% ========================================================================
-%% PLOT DA CONSTELAÇÃO
-%% ========================================================================
-% Plota os símbolos do RV=1 para visualização
-figure('Name', 'Constelação do Sinal Transmitido', 'NumberTitle', 'off');
-scatter(real(rx_1), imag(rx_1), 15, 'filled', 'MarkerFaceAlpha', 0.6, 'MarkerFaceColor', '#0072BD');
-grid on;
-title(sprintf('Constelação (Q_m = %d) | SNR = %d dB | Blocos = %d', Q_m, SNR_dB, C));
-xlabel('Fase (I)');
-ylabel('Quadratura (Q)');
-axis square;
 
-% Ajusta os limites do gráfico para ficar centralizado
-limite = max(abs([real(rx_1), imag(rx_1)])) * 1.2;
-xlim([-limite limite]);
-ylim([-limite limite]);
+
+

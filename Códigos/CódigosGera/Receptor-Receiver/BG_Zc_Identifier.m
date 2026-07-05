@@ -10,6 +10,11 @@ function [BG, Zc_selected] = BG_Zc_Identifier(A, CodeRate, K)
     else
         BG = 1;
     end
+
+    if nargin < 3
+        Zc_selected = [];
+        return; 
+    end
     
     if BG == 2
         if A <= 192

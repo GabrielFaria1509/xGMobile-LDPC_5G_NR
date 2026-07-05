@@ -33,9 +33,6 @@ function f_interleaved = RateMatching(c, BG_number, Zc, E,Q_m,attempt)
     % EN: Extracts the automatic RV corresponding to the current attempt
     rv_idx = rv_sequency(attempt);
 
-
-    c = c(:).';
-
     
     %% 1. Puncturing Fixo | Standard puncturing defined by 3GPP (Subclause 5.4.2.1)
     % PT: Deleta os primeiros 2*Zc bits da palavra-código original

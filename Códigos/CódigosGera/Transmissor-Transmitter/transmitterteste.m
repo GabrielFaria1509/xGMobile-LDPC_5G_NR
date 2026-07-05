@@ -1,4 +1,4 @@
-function [final_message_modulated, final_message_modulated2, final_message_modulated3, final_message_modulated4, C, BG_number, Zc, B, H] = transmitter(message, R, E, Q_m, SNR)
+function [final_message_modulated, final_message_modulated2, final_message_modulated3, final_message_modulated4, C, BG_number, Zc, B, H] = transmitterteste(message, R, E, Q_m, SNR)
     
     A = length(message);
     
@@ -15,7 +15,7 @@ function [final_message_modulated, final_message_modulated2, final_message_modul
     %% =======================================================
     
     % 1. Segmentação (Code Block Segmentation)
-    [blocks, C, K_perblock, L] = codeBlockSegmentation(msg_crc, BG_number);
+    [blocks, C, K_perblock] = codeBlockSegmentation(msg_crc, BG_number);
     
     % Definição do Zc e Matrizes (Agora baseadas no bloco fatiado)
     Zc = Zc_selector(K_perblock, BG_number);
