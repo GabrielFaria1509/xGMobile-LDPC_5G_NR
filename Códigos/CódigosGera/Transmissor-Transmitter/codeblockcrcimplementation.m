@@ -7,11 +7,9 @@ function blocks_with_crc = codeblockcrcimplementation(blocks,C)
 
         if C > 1 
             codeblockscrc = crc_generator(codeblock,"24B");
-
             processed_block = [codeblock,codeblockscrc];
-
-
-        else
+  
+       else
             processed_block = codeblock;
         end
         

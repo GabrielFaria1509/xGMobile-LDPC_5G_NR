@@ -19,7 +19,8 @@ function CRC = crc_generator(message,crc_option)
             g = [1 1 0 0 0 0 1 1 0 0 1 0 0 1 1 0 0 1 1 1 1 1 0 1 1];
        case "24B"  %%For code blocks
             L = 24;
-            g = [1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 0 0 0 0 1 1];
+            g = [1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 0 0 1 1];
+             
        case "16" %for short messages
             L = 16;
             g = [1 0 0 0 1 0 0 0 0 0 0 1 0 0 0 0 1];

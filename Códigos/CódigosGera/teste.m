@@ -15,8 +15,7 @@ SNR_dB = 5;       % Relação Sinal-Ruído
 fprintf('\n======================================================\n');
 fprintf('--- TESTE DE PIPELINE: TRANSMISSOR 5G xGMobile ---\n');
 fprintf('======================================================\n');
-
-% DICA DE TESTE: 
+ 
 % Digite 1000 para ver como ele processa 1 bloco só (C = 1).
 % Digite 10000 para forçar a segmentação e ver ele dividir em blocos (C > 1).
 A = input("Digite o tamanho da mensagem a ser enviada (em bits): "); 

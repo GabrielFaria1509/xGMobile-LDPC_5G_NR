@@ -1,8 +1,7 @@
 function [final_message_modulated, final_message_modulated2, final_message_modulated3, final_message_modulated4, C, BG_number, Zc, B, H] = transmitterteste(message, R, E, Q_m, SNR)
     
     A = length(message);
-    
-    % Passei a 'message' (os bits) em vez de 'A' (o tamanho) para o gerador
+   
     CRC = crc_generator(message); 
     msg_crc = [message, CRC];
 
@@ -17,7 +16,7 @@ function [final_message_modulated, final_message_modulated2, final_message_modul
     % 1. Segmentação (Code Block Segmentation)
     [blocks, C, K_perblock] = codeBlockSegmentation(msg_crc, BG_number);
     
-    % Definição do Zc e Matrizes (Agora baseadas no bloco fatiado)
+    % Definição do Zc e Matrizes 
     Zc = Zc_selector(K_perblock, BG_number);
     BG = baseGraph_generator(BG_number, Zc);
 
