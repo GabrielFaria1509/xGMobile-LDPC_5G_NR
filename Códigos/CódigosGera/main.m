@@ -14,7 +14,9 @@ R = 1/2;           % Taxa de Código Alvo (Code Rate)
 E = 250;           % Recursos físicos máximo(Maximal physical resource)
 Q_m = 2;           % Ordem de Modulação (2 = QPSK)
 
-SNR_dB = 4;       % Relação Sinal-Ruído(Relação Sinal-Ruído)
+SNR_dB = 8;       % Relação Sinal-Ruído(Relação Sinal-Ruído)
+
+I_max = 100;
 
 
 fprintf('\n======================================================\n');
@@ -53,7 +55,6 @@ for attempt = 1 : 4
     buffer_harq = derate_matching(llrs_canal, BG, Zc, Q_m, B, attempt, buffer_harq);
 
     fprintf('   [LDPC] Rodando Decodificador Min-Sum...\n');
-    I_max = 50;
     palavra_recuperada_LDPC = sum_product_decoding(H,buffer_harq,I_max);
 
     mensagem_recuperada = palavra_recuperada_LDPC(1:A);
@@ -63,7 +64,7 @@ for attempt = 1 : 4
     if erros == 0
         fprintf('\n   [✅ SUCESSO] Mensagem recuperada PERFEITAMENTE na tentativa %d!\n', attempt);
         sucesso = true;
-        display(mensagem_recuperada);
+        %display(mensagem_recuperada);
         break;
     else
          fprintf('   [❌ FALHA] Foram encontrados %d bits errados.\n', erros);
