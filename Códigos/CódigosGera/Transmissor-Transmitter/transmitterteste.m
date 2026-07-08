@@ -32,6 +32,11 @@ function [final_message_modulated, final_message_modulated2, final_message_modul
     % 4. Codificação de Canal (LDPC)
     % 4. Codificação de Canal (LDPC)
     encoded_blocks = codeBlockEncoding(blocks_filled, C, G);
+
+    for i = 1 : C
+        filler_indices = find(blocks_filled{i} == -1);
+        encoded_blocks{i}(filler_indices) = -1;
+    end
     
     %% === RAIO-X PARA DEBUG ===
     fprintf('\n--- RAIO-X DO PIPELINE ---\n');
