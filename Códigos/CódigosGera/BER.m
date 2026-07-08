@@ -26,7 +26,7 @@ for k = 1:length(SNR_dB_vector)
     errosTotais = 0;
     bitsTotais = 0;
 
-    while bitsTotais<1000
+    while bitsTotais<600
         % gera mensagem
         msg_original = message_generator(A);
 
@@ -70,7 +70,7 @@ for k = 1:length(SNR_dB_vector)
     BER_Totais(k)=errosTotais/bitsTotais;
 
 end
-BER_Totais(BER_Totais == 0) = 1e-5;   % ou 1e-10
+BER_Totais(BER_Totais == 0) = 1e-1;   % ou 1e-10
 
 BER_Totais
 
@@ -90,4 +90,4 @@ set(gca, 'FontSize', 11)
 xlim([min(SNR_dB_vector) max(SNR_dB_vector)])
 
 % Ajuste o eixo Y conforme seus dados
-ylim([1e-5 1])
+ylim([1e-1 1])
