@@ -9,9 +9,10 @@ f_interleaved = bi2de(reshape(f_interleaved,Q_m,[]).',"left-msb");
 modulated_word = qammod(f_interleaved,2^Q_m,'UnitAveragePower', true);
 
 %%SNR construction process
-E = 1;
-SNR_L = 10^(SNR/10);
-sigma  = sqrt(E/(2*SNR_L));
+%E = 1;
+%SNR_L = 10^(SNR/10);
+%sigma  = sqrt(E/(2*SNR_L));
+sigma = sqrt(1./(2*Q_m*10.^(SNR/10)));
 
 %%Channel 
 % Add noise to the modulated signal for channel simulation

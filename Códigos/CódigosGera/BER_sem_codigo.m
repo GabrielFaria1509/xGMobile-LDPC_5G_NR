@@ -1,0 +1,63 @@
+clear;clc;close all;
+
+% Adiciona todas as subpastas (Transmissor, Receptor, etc.) ao path do MATLAB
+% IMPORTANTE: Certifique-se de que o "Current Folder" do MATLAB é a pasta 'CódigosGera'
+addpath(genpath(pwd));
+
+
+%%%% 1. PARÂMETROS DO SISTEMA
+Q_m = 2;           % Ordem de Modulação (2 = QPSK)
+A = 500;           % Tamanho da mesnsagem
+SNR_dB_vector = 0:1:10;     % Relação Sinal-Ruído(Relação Sinal-Ruído)
+
+BER_Totais = zeros(1,length(SNR_dB_vector));
+
+
+        
+for k = 1:length(SNR_dB_vector)
+    SNR_dB = SNR_dB_vector(k);
+    errosTotais = 0;
+    bitsTotais = 0;
+
+    while errosTotais<1000
+        % gera mensagem
+        msg_original = message_generator(A);
+
+        msg_modulada = ModulatorProcess(msg_original,Q_m,SNR_dB);
+        msg_demodulada = qamdemod(msg_modulada,2^Q_m,"UnitAveragePower",true);
+        bits = de2bi(msg_demodulada, Q_m, "left-msb");
+        msg_bit_demod = reshape(bits.', size(msg_original));
+
+        erros = sum(msg_original(:) ~= msg_bit_demod(:));
+
+        % conta erros
+        errosTotais = errosTotais + erros
+        bitsTotais = bitsTotais + A;
+
+    end
+
+    
+    BER_Totais(k)=errosTotais/bitsTotais;
+
+end
+%BER_Totais(BER_Totais == 0) = 1e-4;   % ou 1e-10
+
+BER_Totais
+
+figure
+semilogy(SNR_dB_vector, BER_Totais, '-o', ...
+    'LineWidth', 2, ...
+    'MarkerSize', 8);
+
+grid on
+grid minor
+
+xlabel('SNR (dB)', 'FontSize', 12)
+ylabel('BER', 'FontSize', 12)
+title('Curva BER x SNR', 'FontSize', 14)
+
+set(gca, 'FontSize', 11)
+xlim([0 12])
+
+% Ajuste o eixo Y conforme seus dados
+ylim([min(BER_Totais) 1])
