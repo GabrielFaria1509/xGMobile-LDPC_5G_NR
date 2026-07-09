@@ -27,7 +27,7 @@ H = H_matrix_generator(BG, Zc);
 G = G_matrix_generator_2(H,Zc);
         
 for k = 1:length(SNR_dB_vector)
-    SNR_dB = SNR_dB_vector(k)
+    SNR_dB = SNR_dB_vector(k);
     errosTotais = 0;
     bitsTotais = 0;
 
