@@ -7,12 +7,12 @@ addpath(genpath(pwd));
 
 %%%% 1. PARÂMETROS DO SISTEMA
 R = 1/2;           % Taxa de Código Alvo (Code Rate)
-E = 1250;           % Recursos físicos máximo(Maximal physical resource)
+E = 500;           % Recursos físicos máximo(Maximal physical resource)
 Q_m = 2;           % Ordem de Modulação (2 = QPSK)
-A = 1000;           % Tamanho da mesnsagem
-SNR_dB_vector = 5:0.5:10;     % Relação Sinal-Ruído(Relação Sinal-Ruído)
+A = 500;           % Tamanho da mesnsagem
+SNR_dB_vector = 0:0.5:3;     % Relação Sinal-Ruído(Relação Sinal-Ruído)
 
-I_max = 20;
+I_max = 3;
 BER_Totais = zeros(1,length(SNR_dB_vector));
 
 %gerando matriz G para economixar tempo
@@ -31,7 +31,7 @@ for k = 1:length(SNR_dB_vector)
     errosTotais = 0;
     bitsTotais = 0;
 
-    while bitsTotais<50000
+    while errosTotais<100
         % gera mensagem
         msg_original = message_generator(A);
 
@@ -67,15 +67,16 @@ for k = 1:length(SNR_dB_vector)
         end
 
         % conta erros
-        errosTotais = errosTotais + erros;
-        bitsTotais = bitsTotais + A
+        errosTotais = errosTotais + erros
+        bitsTotais = bitsTotais + A;
 
     end
 
+    
     BER_Totais(k)=errosTotais/bitsTotais;
 
 end
-BER_Totais(BER_Totais == 0) = 1e-3;   % ou 1e-10
+%BER_Totais(BER_Totais == 0) = 1e-4;   % ou 1e-10
 
 BER_Totais
 
@@ -92,7 +93,7 @@ ylabel('BER', 'FontSize', 12)
 title('Curva BER x SNR', 'FontSize', 14)
 
 set(gca, 'FontSize', 11)
-xlim([min(SNR_dB_vector) max(SNR_dB_vector)])
+xlim([0 7])
 
 % Ajuste o eixo Y conforme seus dados
-ylim([1e-3 1])
+ylim([min(BER_Totais) 1e-1])
