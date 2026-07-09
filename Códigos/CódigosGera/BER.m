@@ -1,5 +1,10 @@
 clear;clc;close all;
 
+% Adiciona todas as subpastas (Transmissor, Receptor, etc.) ao path do MATLAB
+% IMPORTANTE: Certifique-se de que o "Current Folder" do MATLAB é a pasta 'CódigosGera'
+addpath(genpath(pwd));
+
+
 %%%% 1. PARÂMETROS DO SISTEMA
 R = 1/2;           % Taxa de Código Alvo (Code Rate)
 E = 1250;           % Recursos físicos máximo(Maximal physical resource)

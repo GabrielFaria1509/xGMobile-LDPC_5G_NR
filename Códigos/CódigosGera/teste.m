@@ -3,6 +3,11 @@
 %% ========================================================================
 clear; clc; close all;
 
+% Adiciona todas as subpastas (Transmissor, Receptor, etc.) ao path do MATLAB
+% IMPORTANTE: Certifique-se de que o "Current Folder" do MATLAB é a pasta 'CódigosGera'
+addpath(genpath(pwd));
+
+
 %% 1. PARÂMETROS GERAIS DO SISTEMA
 % Você pode brincar com esses valores depois para testar o limite do canal
 A = 1000;          % Tamanho da mensagem original (bits)
@@ -10,6 +15,7 @@ R = 1/3;           % Taxa de código (Code Rate)
 E = 15000;         % Tamanho total de recursos após Rate Matching (bits)
 Q_m = 2;           % Ordem de modulação (2 = QPSK)
 SNR_dB = 5;        % Relação Sinal-Ruído no canal (Tente baixar para forçar o HARQ)
+
 
 fprintf('==========================================================\n');
 fprintf(' Iniciando Simulação 5G NR LDPC \n');
