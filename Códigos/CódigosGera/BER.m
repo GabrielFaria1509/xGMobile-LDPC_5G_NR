@@ -1,11 +1,11 @@
-clear;close all;
+clear;clc;close all;
 
 %%%% 1. PARÂMETROS DO SISTEMA
 R = 1/2;           % Taxa de Código Alvo (Code Rate)
-E = 250;           % Recursos físicos máximo(Maximal physical resource)
+E = 1250;           % Recursos físicos máximo(Maximal physical resource)
 Q_m = 2;           % Ordem de Modulação (2 = QPSK)
-A = 200;           % Tamanho da mesnsagem
-SNR_dB_vector = 0:0.5:7;     % Relação Sinal-Ruído(Relação Sinal-Ruído)
+A = 1000;           % Tamanho da mesnsagem
+SNR_dB_vector = 5:0.5:10;     % Relação Sinal-Ruído(Relação Sinal-Ruído)
 
 I_max = 20;
 BER_Totais = zeros(1,length(SNR_dB_vector));
@@ -26,7 +26,7 @@ for k = 1:length(SNR_dB_vector)
     errosTotais = 0;
     bitsTotais = 0;
 
-    while bitsTotais<600
+    while bitsTotais<50000
         % gera mensagem
         msg_original = message_generator(A);
 
@@ -70,7 +70,7 @@ for k = 1:length(SNR_dB_vector)
     BER_Totais(k)=errosTotais/bitsTotais;
 
 end
-BER_Totais(BER_Totais == 0) = 1e-1;   % ou 1e-10
+BER_Totais(BER_Totais == 0) = 1e-3;   % ou 1e-10
 
 BER_Totais
 
@@ -90,4 +90,4 @@ set(gca, 'FontSize', 11)
 xlim([min(SNR_dB_vector) max(SNR_dB_vector)])
 
 % Ajuste o eixo Y conforme seus dados
-ylim([1e-1 1])
+ylim([1e-3 1])
