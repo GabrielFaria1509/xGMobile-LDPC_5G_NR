@@ -1,84 +1,122 @@
 %% ========================================================================
-%% SIMULADOR 5G LDPC - xGMobile (Integração Completa)
+%% 5G LDPC SIMULATOR - xGMobile (Complete Integration)
 %% ========================================================================
-% Este script orquestra a comunicação entre o Transmissor e o Receptor,
-% simulando o envio de pacotes, a ação do ruído e as retransmissões HARQ.
-clear;close all;
+% This script orchestrates the communication between the Transmitter and
+% Receiver, simulating packet transmission, channel noise effects, and HARQ
+% retransmissions.
 
-% Adiciona todas as subpastas (Transmissor, Receptor, etc.) ao path do MATLAB
-% IMPORTANTE: Certifique-se de que o "Current Folder" do MATLAB é a pasta 'CódigosGera'
+clear; close all;
+
+% Add all subfolders (Transmitter, Receiver, etc.) to MATLAB path
+% IMPORTANT: Make sure that MATLAB "Current Folder" is the 'CódigosGera' folder
 addpath(genpath(pwd));
 
-%%%% 1. PARÂMETROS DO SISTEMA
-R = 1/2;           % Taxa de Código Alvo (Code Rate)
-E = 250;           % Recursos físicos máximo(Maximal physical resource)
-Q_m = 2;           % Ordem de Modulação (2 = QPSK)
 
-SNR_dB = 8;       % Relação Sinal-Ruído(Relação Sinal-Ruído)
+%%%% 1. SYSTEM PARAMETERS
 
-I_max = 100;
+R = 1/2;           % Target Code Rate
+E = 250;           % Maximum physical resources
+Q_m = 2;           % Modulation Order (2 = QPSK)
+
+SNR_dB = 8;        % Signal-to-Noise Ratio (dB)
+
+I_max = 100;       % Maximum number of LDPC decoder iterations
 
 
 fprintf('\n======================================================\n');
-fprintf('--- INICIANDO SIMULAÇÃO 5G xGMobile ---\n');
+fprintf('--- STARTING 5G xGMobile SIMULATION ---\n');
 
-A = input("Digite o tamanho da mensagem a ser enviada : "); % Tamanho da mensagem original (bits)
+
+A = input("Enter the message size to be transmitted: "); % Original message size (bits)
+
 msg_original = message_generator(A);
-disp("Mensagem gerada : ")
+
+disp("Generated message:")
 disp(msg_original);
 
-fprintf('\n[TX] Transmitindo pacotes (Gerando os  RV simultaneamente)...\n');
+
+fprintf('\n[TX] Transmitting packets (Generating all RVs simultaneously)...\n');
+
 [rx_1, rx_2, rx_3, rx_4, BG, Zc, B, c, H] = transmitter(msg_original, R, E, Q_m, SNR_dB);
 
-sucesso = false;
 
-buffer_harq = -1;
+success = false;
+
+harq_buffer = -1;
+
 
 for attempt = 1 : 4
-    fprintf('\n-> Iniciando Recepção - Tentativa %d (HARQ)...\n', attempt);
+
+    fprintf('\n-> Starting Reception - Attempt %d (HARQ)...\n', attempt);
+
 
     if attempt == 1
-        sinal_recebido = rx_1; % Tenta decodificar o RV=0 primeiro
+        received_signal = rx_1; % Attempts decoding with RV=0 first
+
     elseif attempt == 2
-        sinal_recebido = rx_2; % Puxa o RV=2 que estava guardado
+        received_signal = rx_2; % Retrieves stored RV=2
+
     elseif attempt == 3
-        sinal_recebido = rx_3; % Puxa o RV=3
+        received_signal = rx_3; % Retrieves RV=3
+
     else
-        sinal_recebido = rx_4; % Puxa o RV=1
+        received_signal = rx_4; % Retrieves RV=1
+
     end
 
-    fprintf('   [Demodulador] Calculando as probabilidades LLR...\n');
-    llrs_canal = ReceiverEntry(sinal_recebido, Q_m, SNR_dB);
 
-    fprintf('   [De-Rate Matching] Reconstruindo Buffer Circular...\n');
+    fprintf('   [Demodulator] Calculating channel LLR probabilities...\n');
 
-    buffer_harq = derate_matching(llrs_canal, BG, Zc, Q_m, B, attempt, buffer_harq);
+    channel_llrs = ReceiverEntry(received_signal, Q_m, SNR_dB);
 
-    fprintf('   [LDPC] Rodando Decodificador Min-Sum...\n');
-    palavra_recuperada_LDPC = sum_product_decoding(H,buffer_harq,I_max);
 
-    mensagem_recuperada = palavra_recuperada_LDPC(1:A);
+    fprintf('   [De-Rate Matching] Reconstructing Circular Buffer...\n');
 
-    erros = sum(msg_original(:) ~= mensagem_recuperada(:));
+    harq_buffer = derate_matching(channel_llrs, BG, Zc, Q_m, B, attempt, harq_buffer);
 
-    if erros == 0
-        fprintf('\n   [✅ SUCESSO] Mensagem recuperada PERFEITAMENTE na tentativa %d!\n', attempt);
-        sucesso = true;
-        %display(mensagem_recuperada);
+
+    fprintf('   [LDPC] Running Min-Sum Decoder...\n');
+
+    recovered_LDPC_word = sum_product_decoding(H, harq_buffer, I_max);
+
+
+    recovered_message = recovered_LDPC_word(1:A);
+
+
+    errors = sum(msg_original(:) ~= recovered_message(:));
+
+
+    if errors == 0
+
+        fprintf('\n   [SUCCESS] Message perfectly recovered on attempt %d!\n', attempt);
+
+        success = true;
+
+        %display(recovered_message);
+
         break;
+
     else
-         fprintf('   [❌ FALHA] Foram encontrados %d bits errados.\n', erros);
-         if attempt < 4
-             fprintf('[!] Acionando retransmissão HARQ automática para a tentativa %d...\n',attempt + 1);
-         end
+
+        fprintf('   [FAILURE] %d incorrect bits were detected.\n', errors);
+
+        if attempt < 4
+
+            fprintf('[!] Triggering automatic HARQ retransmission for attempt %d...\n', attempt + 1);
+
+        end
+
     end
+
 end
 
-if ~sucesso
-    fprintf('Informações perdidas mesmo após HARQ. \n--- DICA: O canal está muito ruidoso. Tente aumentar o SNR.\n');
+
+if ~success
+
+    fprintf('Information lost even after HARQ.\n--- TIP: The channel is too noisy. Try increasing the SNR.\n');
+
 else
-    fprintf('Comunicação estabelcida com sucesso')
+
+    fprintf('Communication successfully established.\n');
+
 end
-
-
-

@@ -1,37 +1,42 @@
-function [final_block1, final_block2, final_block3, final_block4] = codeBlockRateMatching(encoded_blocks, C, E, BG_number, Zc, Q_m)
-        
-    % Inicializa as variáveis de saída vazias
-    final_block1 = [];
-    final_block2 = [];
-    final_block3 = [];
-    final_block4 = [];
-    
-    %% CORREÇÃO: Divisão Baseada em Símbolos (Garante múltiplos de Q_m)
-    symbol_chunks = floor(E / Q_m);       % Total de símbolos disponíveis
-    chunks_base = floor(symbol_chunks / C); % Símbolos por bloco
-    chunks_rest = mod(symbol_chunks, C);    % Símbolos extras a distribuir
-    
-    E_base = chunks_base * Q_m;           % Bits base por bloco
-    
-    for i = 1 : C
-        codeword = encoded_blocks{i};
-        
-        % Os primeiros 'chunks_rest' blocos ganham 1 símbolo extra (Q_m bits)
-        if (i - 1) < chunks_rest
-            E_i = E_base + Q_m;
+function [rate_matched_block_RV1, rate_matched_block_RV2, ...
+          rate_matched_block_RV3, rate_matched_block_RV4] = ...
+          codeBlockRateMatching(encoded_code_blocks, C, E, BG_number, Zc, Q_m)
+
+    % Initialize the output sequences
+    rate_matched_block_RV1 = [];
+    rate_matched_block_RV2 = [];
+    rate_matched_block_RV3 = [];
+    rate_matched_block_RV4 = [];
+
+    %% Symbol-based allocation (guarantees multiples of Q_m)
+    total_symbols = floor(E / Q_m);
+    symbols_per_CB = floor(total_symbols / C);
+    remaining_symbols = mod(total_symbols, C);
+
+    E_base = symbols_per_CB * Q_m;
+
+    for i = 1:C
+
+        codeword = encoded_code_blocks{i};
+
+        % The first 'remaining_symbols' Code Blocks receive one extra symbol
+        if (i - 1) < remaining_symbols
+            E_r = E_base + Q_m;
         else
-            E_i = E_base;
+            E_r = E_base;
         end
-        
-        % Chamada da função de Rate Matching para cada Redundancy Version (RV)
-        block_rv1 = RateMatching(codeword, BG_number, Zc, E_i, Q_m, 1);
-        block_rv2 = RateMatching(codeword, BG_number, Zc, E_i, Q_m, 2);
-        block_rv3 = RateMatching(codeword, BG_number, Zc, E_i, Q_m, 3);
-        block_rv4 = RateMatching(codeword, BG_number, Zc, E_i, Q_m, 4);
-        
-        final_block1 = [final_block1, block_rv1];
-        final_block2 = [final_block2, block_rv2];
-        final_block3 = [final_block3, block_rv3];
-        final_block4 = [final_block4, block_rv4];
+
+        % Rate Matching for each Redundancy Version (RV)
+        rate_matched_CB_RV1 = RateMatching(codeword, BG_number, Zc, E_r, Q_m, 1);
+        rate_matched_CB_RV2 = RateMatching(codeword, BG_number, Zc, E_r, Q_m, 2);
+        rate_matched_CB_RV3 = RateMatching(codeword, BG_number, Zc, E_r, Q_m, 3);
+        rate_matched_CB_RV4 = RateMatching(codeword, BG_number, Zc, E_r, Q_m, 4);
+
+        rate_matched_block_RV1 = [rate_matched_block_RV1, rate_matched_CB_RV1];
+        rate_matched_block_RV2 = [rate_matched_block_RV2, rate_matched_CB_RV2];
+        rate_matched_block_RV3 = [rate_matched_block_RV3, rate_matched_CB_RV3];
+        rate_matched_block_RV4 = [rate_matched_block_RV4, rate_matched_CB_RV4];
+
     end
+
 end

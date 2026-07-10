@@ -1,46 +1,44 @@
-function CRC = crc_generator(message,crc_option)
+function CRC = crc_generator(bit_sequence, crc_type)
 
-     message = message(:).';
+    bit_sequence = bit_sequence(:).';
 
-     A = length(message);
-
+    A = length(bit_sequence);
 
     if nargin < 2
         if A > 3824
-            crc_option = "24A";
+            crc_type = "24A";
         else
-            crc_option = "16";
+            crc_type = "16";
         end
     end
 
-   switch crc_option
-       case "24A"  %For big messages but not with code block segmentation
+    switch crc_type
+
+        case "24A"      % Transport Block CRC
             L = 24;
             g = [1 1 0 0 0 0 1 1 0 0 1 0 0 1 1 0 0 1 1 1 1 1 0 1 1];
-       case "24B"  %%For code blocks
+
+        case "24B"      % Code Block CRC
             L = 24;
             g = [1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 0 0 1 1];
-             
-       case "16" %for short messages
+
+        case "16"       % Transport Block CRC for short blocks
             L = 16;
             g = [1 0 0 0 1 0 0 0 0 0 0 1 0 0 0 0 1];
-        otherwise
-            error('Tipo de CRC inválido. Use: "24A", "24B" ou "16".');
-    end
-    
-    temp_message = [message,zeros(1,L)];
 
-    for i = 1 : A
-        if temp_message(i) == 1
-            temp_message(i:i+L) = mod(temp_message(i:i+L) + g,2);
+        otherwise
+            error('Invalid CRC type. Use: "24A", "24B" or "16".');
+
+    end
+
+    dividend = [bit_sequence, zeros(1, L)];
+
+    for i = 1:A
+        if dividend(i) == 1
+            dividend(i:i+L) = mod(dividend(i:i+L) + g, 2);
         end
     end
 
-    CRC = temp_message(end - L + 1 : end);
+    CRC = dividend(end-L+1:end);
+
 end
-
-
-
-
-    
-    

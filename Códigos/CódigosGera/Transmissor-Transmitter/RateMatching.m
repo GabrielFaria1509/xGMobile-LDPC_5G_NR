@@ -1,119 +1,103 @@
-function f_interleaved = RateMatching(c, BG_number, Zc, E,Q_m,attempt)
+function f_interleaved = RateMatching(c, BG_number, Zc, E, Q_m, attempt)
+
     %% =========================================================================
-    %% DICIONÁRIO DE VARIÁVEIS | VARIABLE LEGEND (3GPP TS 38.212)
+    %% VARIABLE LEGEND (3GPP TS 38.212)
     %% =========================================================================
-    % [ENTRADAS | INPUTS]
-    % c        : Palavra-código original do LDPC | Original LDPC codeword (with -1 as <NULL>)
-    % BG       : Grafo Base (1 ou 2) | Base Graph (1 or 2)
-    % Zc       : Tamanho do Lifting | Lifting Size (Expansion factor)
-    % E        : Tamanho exato da saída | Exact output sequence length (Avaliable physical resource)
-    % rv_idx   : Índice de Redundância (0 a 3) | Redundancy Version Index (0 to 3) for HARQ
-    % Q_m      : Bits por símbolo | Modulation Order(Bits per symbol) (e.g., 2=QPSK, 4=16QAM)
+    % INPUTS
+    % c        : LDPC codeword (with -1 representing <NULL>)
+    % BG_number: Base Graph (1 or 2)
+    % Zc       : Lifting size
+    % E        : Rate matching output length
+    % Q_m      : Modulation order (bits per symbol)
+    % attempt  : HARQ transmission attempt
     %
-    % [VARIÁVEIS INTERNAS | INTERNAL VARIABLES]
-    % StandardPuncturing : Bits de informação apagados | Info bits punctured (2*Zc)
-    % d                  : Sequência após puncturing | Punctured Sequence (Circular Buffer Content)
-    % N_cb               : Tamanho do Buffer Circular | Circular Buffer Length
-    % k0                 : Ponto de partida de leitura | Starting position based on rv_idx
-    % e_k                : Vetor de bits extraídos | Selected Bits Vector (Size E, no <NULL>s)
-    % k, j               : Contadores (Bits, Catraca) | Counters (Valid bits, Buffer steps)
-    % interleaved_matrix : Matriz temporária | Interleaving matrix (to spread burst errors)
+    % INTERNAL VARIABLES
+    % punctured_bits      : Number of punctured bits (2*Zc)
+    % d                   : Circular buffer
+    % N_cb                : Circular buffer length
+    % k0                  : Starting position
+    % e_k                 : Selected bits
+    % interleaving_matrix : Temporary interleaving matrix
     %
-    % [SAÍDA | OUTPUT]
-    % f_interleaved      : Vetor final transmitido | Final Transmitted Sequence (Size E)
+    % OUTPUT
+    % f_interleaved       : Rate-matched output sequence
     %% =========================================================================
 
- 
+    rv_sequence = [0,2,3,1];
 
-    rv_sequency = [0,2,3,1];
+    % Select the Redundancy Version (RV)
+    rv_idx = rv_sequence(attempt);
 
+    %% 1. Standard puncturing (TS 38.212 - Clause 5.4.2.1)
 
-    
-    % PT: Extrai o RV automático correspondente à tentativa atual
-    % EN: Extracts the automatic RV corresponding to the current attempt
-    rv_idx = rv_sequency(attempt);
+    punctured_bits = 2 * Zc;
 
-    
-    %% 1. Puncturing Fixo | Standard puncturing defined by 3GPP (Subclause 5.4.2.1)
-    % PT: Deleta os primeiros 2*Zc bits da palavra-código original
-    % EN: Deletes the first 2*Zc bits of the original codeword
-    StandardPuncturing = 2 * Zc;
-
-
-    % Trava de Segurança: Verifica se o vetor não está vazio por erro anterior
-    if length(c) < StandardPuncturing
-        error('CRÍTICO: O codeword chegou com %d bits. Deveria ter pelo menos %d! Verifique o codeword_generator.', length(c), StandardPuncturing);
+    if length(c) < punctured_bits
+        error('CRITICAL: The codeword contains %d bits. Expected at least %d bits.', ...
+              length(c), punctured_bits);
     end
-   
 
-
-    c(1:StandardPuncturing) = [];
+    c(1:punctured_bits) = [];
     d = c;
-    
-    %% 2. Tamanho do Buffer Circular | Circular buffer length
-    % PT: Calcula o tamanho do vetor após o puncturing
-    % EN: Calculates the vector length after puncturing
+
+    %% 2. Circular buffer length
+
     N_cb = length(d);
-    
-    % PT: Define o ponto de partida (k0) baseado na Redundancy Version (RV)
-    % EN: Defines the starting position (k0) based on the Redundancy Version (RV)
+
+    %% Starting position k0
+
     if BG_number == 1
+
         switch rv_idx
             case 0, k0 = 0;
             case 1, k0 = floor((17 * N_cb) / (66 * Zc)) * Zc;
             case 2, k0 = floor((33 * N_cb) / (66 * Zc)) * Zc;
             case 3, k0 = floor((56 * N_cb) / (66 * Zc)) * Zc;
         end
+
     elseif BG_number == 2
+
         switch rv_idx
             case 0, k0 = 0;
             case 1, k0 = floor((13 * N_cb) / (50 * Zc)) * Zc;
             case 2, k0 = floor((25 * N_cb) / (50 * Zc)) * Zc;
             case 3, k0 = floor((43 * N_cb) / (50 * Zc)) * Zc;
         end
+
     else
-        error("Base Graph inválido | Invalid Base Graph");
+        error("Invalid Base Graph");
     end
-    
-    %% 3. Seleção de Bits | Bit Selection
-    % PT: Inicializa o vetor de saída com o tamanho exato da antena (E)
-    % EN: Initializes the output vector with the exact antenna size (E)
-    e_k = zeros(1, E);
-    k = 0; % PT: Bits válidos extraídos | EN: Valid bits extracted
-    j = 0; % PT: Passos da catraca | EN: Buffer steps
-    
+
+    %% 3. Bit Selection
+
+    e_k = zeros(1,E);
+
+    k = 0;
+    j = 0;
+
     while(k < E)
-        % PT: Índice circular com aritmética modular (1-based para MATLAB)
-        % EN: Circular index with modular arithmetic (1-based for MATLAB)
-        index = mod(k0 + j, N_cb) + 1;
-        
-        % PT: Ignora os filler bits (-1) durante a leitura
-        % EN: Skips the filler bits (-1) during the reading process
-        if d(index) ~= -1
-            e_k(k + 1) = d(index);
+
+        circular_index = mod(k0 + j, N_cb) + 1;
+
+        if d(circular_index) ~= -1
+            e_k(k + 1) = d(circular_index);
             k = k + 1;
         end
-        j = j + 1; 
+
+        j = j + 1;
+
     end
 
+    %% 4. Bit Interleaving (TS 38.212 - Clause 5.4.2.2)
 
-                            
-    %% 4. Entrelaçamento de Bits | Bit interleaving (Subclause 5.4.2.2)
-    % PT: Verifica se o tamanho E é divisível pela modulação
-    % EN: Checks if size E is divisible by the modulation order
-    BitsPerSymbol = Q_m;
-    
-    
-    if mod(E,BitsPerSymbol) ~= 0
-        error("Erro: E deve ser múltiplo de Q_m | Error: E must be multiple of Q_m");
+    bits_per_symbol = Q_m;
+
+    if mod(E,bits_per_symbol) ~= 0
+        error("E must be a multiple of Q_m.");
     end
-    
-    % PT: Molda em matriz (preenchimento por coluna) e transpõe (.' ) para forçar preenchimento por linha
-    % EN: Reshapes into matrix (column-major) and transposes (.' ) to force row-major filling
-    interleaved_matrix = reshape(e_k,BitsPerSymbol, E /BitsPerSymbol).';
-    
-    % PT: Planifica a matriz (:) lendo por colunas e transpõe (.' ) para vetor linha horizontal
-    % EN: Flattens the matrix (:) reading by columns and transposes (.' ) to horizontal row vector
-    f_interleaved = interleaved_matrix(:).';
-    
+
+    interleaving_matrix = reshape(e_k, bits_per_symbol, E/bits_per_symbol).';
+
+    f_interleaved = interleaving_matrix(:).';
+
 end

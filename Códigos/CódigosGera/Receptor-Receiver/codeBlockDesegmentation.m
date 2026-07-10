@@ -1,59 +1,127 @@
 function [msg_crc_recovered, crc_cb_pass] = codeBlockDesegmentation(decoded_blocks, C, B)
+
     if C > 1
+
         L = 24;
+
     else
+
         L = 0;
+
     end
-    
+
+
     complete_message = [];
-    crc_cb_pass = true; % Flag de integridade do pacote de blocos
-    
+
+    crc_cb_pass = true; % Code block integrity flag
+
+
     for i = 1 : C
+
         block = decoded_blocks{i};
-        
-        % Força o bloco a ser um vetor linha para evitar quebras de dimensão
-        block = block(:).'; 
+
+
+        % Forces the block to be a row vector to avoid dimension mismatch
+
+        block = block(:).';
+
+
         usable_size = length(block) - L;
-        
-        % 1. Blindagem de tamanho: Verifica se o bloco não foi mutilado no processo
+
+
+
+        % 1. Size protection: Checks if the block was corrupted during processing
+
         if usable_size <= 0
-            fprintf('[Dessegmentação] ERRO CRÍTICO: Bloco %d tem apenas %d bits (esperado > %d).\n', i, length(block), L);
+
+            fprintf('[Desegmentation] CRITICAL ERROR: Block %d has only %d bits (expected > %d).\n', ...
+                i, length(block), L);
+
+
             crc_cb_pass = false;
-            continue; 
+
+            continue;
+
         end
-        
-        % 2. Extrai a parte útil (informação pura + fillers)
+
+
+
+        % 2. Extracts the useful part (information bits + filler bits)
+
         useful_block = block(1 : usable_size);
-        
+
+
+
         if L > 0
-            % Extrai os 24 bits de CRC recebidos no final do bloco
+
+
+            % Extracts the 24 received CRC bits at the end of the block
+
             received_crc = block(usable_size + 1 : end);
-            
-            % Recalcula o CRC localmente (CRC 24B para blocos)
+
+
+
+            % Locally recalculates the CRC (CRC-24B for code blocks)
+
             calculated_crc = crc_generator(useful_block, "24B");
-            
-            % Compara garantindo que ambos são vetores linha
+
+
+
+            % Compares both vectors as row vectors
+
             if isequal(received_crc(:).', calculated_crc(:).')
-                fprintf('[Dessegmentação] Bloco %d/%d: CRC Válido! ✅\n', i, C);
+
+                fprintf('[Desegmentation] Block %d/%d: Valid CRC! \n', i, C);
+
+
             else
-                fprintf('[Dessegmentação] ALERTA: Bloco %d/%d falhou no CRC! ❌\n', i, C);
+
+                fprintf('[Desegmentation] WARNING: Block %d/%d failed CRC validation! \n', i, C);
+
                 crc_cb_pass = false;
+
             end
+
         end
-        % =================================================================
-        
-        % 3. Concatena os blocos limpos
+
+
+
+        % 3. Concatenates validated blocks
+
         complete_message = [complete_message, useful_block];
+
     end
-    
-    % 4. Blindagem do Truncamento de Filler Bits
+
+
+
+    % 4. Filler bits truncation protection
+
     if length(complete_message) >= B
-        % Corta os filler bits excedentes para voltar ao tamanho B (Msg + Transporte)
+
+
+        % Removes excess filler bits to recover the original size B
+        % (Transport message + CRC)
+
         msg_crc_recovered = complete_message(1:B);
+
+
+
     else
-        fprintf('[Dessegmentação] ERRO: Mensagem concatenada (%d bits) é menor que B (%d bits). Preenchendo com zeros.\n', length(complete_message), B);
-        % Preenche a diferença com zeros para o CRC-24A principal avaliar a falha sem travar
+
+
+        fprintf('[Desegmentation] ERROR: Concatenated message (%d bits) is smaller than B (%d bits). Padding with zeros.\n', ...
+            length(complete_message), B);
+
+
+        % Pads missing bits with zeros to allow the main CRC-24A
+        % verification to detect failure without stopping execution
+
         padding = zeros(1, B - length(complete_message));
+
+
         msg_crc_recovered = [complete_message, padding];
+
+
     end
+
 end

@@ -1,38 +1,50 @@
 function G = G_matrix_generator_2(H, Zc)
-%Inicializa dimensões da matriz
 
-H = full(H);%função gf só aceita matriz cheia,não sparse
-[m,n] = size(H);
+% Convert to full matrix (gf() does not accept sparse matrices)
+H = full(H);
 
-%bits de informação
-k = n - m;
+% Matrix dimensions
+[M, N] = size(H);
 
-%Divisão da matriz H recebida em dois blocos(Matrizes)
-% Dividir a matriz H em dois blocos(A == bits de informação,B = matriz quadrada,bits de paridade)
-disp("Gerando G,pode demorar para Zc maiores")
-A = H(:,1:k);
-B = H(:,k+1:n);
+% Number of information bits
+K = N - M;
 
-% 1. Definimos o ponto de corte do núcleo (as 4 primeiras linhas de bloco)
-m_core = 4 * Zc;
+% Split the parity-check matrix H
+% A: information part
+% B: parity part
+disp("Generating G matrix. This may take longer for larger Zc values.")
 
-% 2. Fatiamos a matriz nas exatas regiões que vimos no mapa
-A1 = A(1:m_core, :);           % Topo Esquerdo
-A2 = A(m_core+1:end, :);       % Fundo Esquerdo
-B1 = B(1:m_core, 1:m_core);    % O Núcleo de Paridade
-B2 = B(m_core+1:end, 1:m_core);% A Extensão de Paridade
+A = H(:, 1:K);
+B = H(:, K+1:N);
 
-% --- A MATEMÁTICA ENTRA AQUI ---
+% Number of rows corresponding to the parity core
+M_core = 4 * Zc;
 
-% Passo 1: Resolve P1 usando gf() SÓ na parte minúscula
+% Partition the matrices
+A1 = A(1:M_core, :);
+A2 = A(M_core+1:end, :);
+
+B1 = B(1:M_core, 1:M_core);
+B2 = B(M_core+1:end, 1:M_core);
+
+% -------------------------------------------------------------------------
+% Generator matrix computation
+% -------------------------------------------------------------------------
+
+% Step 1: Solve P1 over GF(2)
 P1_gf = gf(B1) \ gf(A1);
 P1 = double(P1_gf.x);
 
-% Passo 2: Resolve P2 usando matemática super rápida de matrizes (sem inversa)
+% Step 2: Compute P2
 P2 = mod(A2 + B2 * P1, 2);
 
-% 3. Junta as duas partes encontradas
+% Combine parity matrices
 P = [P1; P2];
-I = speye(k); %matriz identidade esparsa do tamanho da mensagem
-G = [I,P']; % Combina a matriz identidade com a matriz de paridade
+
+% Identity matrix
+I = speye(K);
+
+% Generator matrix
+G = [I, P'];
+
 end

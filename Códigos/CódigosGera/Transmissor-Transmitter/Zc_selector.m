@@ -1,10 +1,11 @@
-function [Zc,Kb] = Zc_selector(B, BG_number)
-    %Tabela com os set index de acordo com o Zc
+function [Zc, Kb] = Zc_selector(B, BG_number)
+
+    % Table containing the valid lifting sizes and lifting set indices
     table = readtable('set.csv');
 
     if BG_number == 1
         Kb = 22;
-    elseif BG_number==2
+    elseif BG_number == 2
         if B > 640
             Kb = 10;
         elseif B > 560
@@ -15,7 +16,10 @@ function [Zc,Kb] = Zc_selector(B, BG_number)
             Kb = 6;
         end
     end
-    
-    possible_Zc = table(table.lifting*Kb >= B,:);
-    Zc = min(possible_Zc);
+
+    valid_Zc = table(table.lifting * Kb >= B, :);
+
+    Zc = min(valid_Zc);
     Zc = Zc{1,1};
+
+end

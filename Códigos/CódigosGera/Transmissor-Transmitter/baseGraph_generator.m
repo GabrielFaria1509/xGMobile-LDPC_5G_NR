@@ -1,39 +1,49 @@
-function BG = baseGraph_generator(opcao_bg, Zc)
-%inputs:
-%opcao_bg: qual base graph esolhido (1 ou 2)
-%Zc: lifiting size
+function BG = baseGraph_generator(BG_number, Zc)
+    %% ====================================================================
+    % FUNCTION: baseGraph_generator
+    % DESCRIPTION: Generates the selected LDPC Base Graph by applying the
+    %              modulo operation to the shift coefficients according to
+    %              the selected lifting size (Zc).
+    % REFERENCE: 3GPP TS 38.212
+    %
+    % INPUTS:
+    %   BG_number - Selected Base Graph (1 or 2)
+    %   Zc        - Lifting size
+    %
+    % OUTPUT:
+    %   BG        - Lifted Base Graph
+    %% ====================================================================
 
-
-    %Tabela com os set index de acordo com o Zc
+    % Table containing the lifting set index for each valid Zc
     table = readtable('set.csv');
+    lifting_set = table(table.lifting == Zc, :);
 
-
-    set_possiveis = table(table.lifting == Zc, :);
-    if isempty(set_possiveis)
-        error("Lifting size fora do padrão")
+    if isempty(lifting_set)
+        error("Non-standard lifting size");
     end
-    set_index = set_possiveis{1,2};
 
+    % i_ls corresponds to the lifting set index defined in TS 38.212
+    i_ls = lifting_set{1,2};
 
-    % seleciona o base graph escolhido e cria a matriz do base graph vazia
-    % a variavel base é o arquivo csv lido
-    if opcao_bg == 1
+    % Load the selected Base Graph
+    if BG_number == 1
         base = readtable('BG1.csv');
-        BG = ones(46, 68)*-1;
-        else
+        BG = ones(46, 68) * -1;
+    else
         base = readtable('BG2.csv');
         BG = ones(42, 52) * -1;
     end
 
-    for i = 1:height(base) %roda todas as linhas do csv
-        
-        %pega as linhas e colunas de acordo com o csv
-        l = base{i,1};
-        c = base{i,2};
-        
+    for i = 1:height(base)
 
-        %analiza o valor que está no csv e adiciona no base graph
-        valor_bruto = base{i,sprintf('s%d', set_index)};
-        valor = mod(valor_bruto, Zc);
-        BG(l+1,c+1) = valor;
+        % Row and column indices of the Base Graph
+        row_idx = base{i,1};
+        col_idx = base{i,2};
+
+        % V_ij is the shift coefficient defined in TS 38.212
+        V_ij = base{i,sprintf('s%d', i_ls)};
+        shift_value = mod(V_ij, Zc);
+
+        BG(row_idx+1, col_idx+1) = shift_value;
     end
+end

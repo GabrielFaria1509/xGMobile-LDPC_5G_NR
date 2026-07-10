@@ -1,12 +1,15 @@
-function blocks_filled = codeBlockFiller(blocks_with_crc,C,G)
-        
-        blocks_filled = cell(1,C);
+function code_blocks_with_filler = codeBlockFiller(code_blocks_with_crc, C, G)
 
-        for i = 1 : C
-            block = blocks_with_crc{i};
+    code_blocks_with_filler = cell(1, C);
 
-            processed_block = filler_bits(block,G);
+    for i = 1:C
 
-            blocks_filled{i} = processed_block;
-        end
+        code_block = code_blocks_with_crc{i};
+
+        processed_code_block = filler_bits(code_block, G);
+
+        code_blocks_with_filler{i} = processed_code_block;
+
+    end
+
 end

@@ -1,31 +1,29 @@
 function rx_signal = ModulatorProcess(f_interleaved,Q_m,SNR)
 
-%%Modulation process
+%% Modulation process
 
-%%It groups the bits and converts them to decimal.
+%% Group bits and convert them to decimal symbols
 f_interleaved = bi2de(reshape(f_interleaved,Q_m,[]).',"left-msb");
 
-%%Modualting 
+%% QAM modulation
 modulated_word = qammod(f_interleaved,2^Q_m,'UnitAveragePower', true);
 
-%%SNR construction process
+%% SNR calculation process
 %E = 1;
-%SNR_L = 10^(SNR/10);
-%sigma  = sqrt(E/(2*SNR_L));
-sigma = sqrt(1./(2*Q_m*10.^(SNR/10)));
+%SNR_linear = 10^(SNR/10);
+%sigma = sqrt(E/(2*SNR_linear));
 
-%%Channel 
-% Add noise to the modulated signal for channel simulation
+noise_std = sqrt(1./(2*Q_m*10.^(SNR/10)));
 
-awgn = sigma*(randn(size(modulated_word)) + 1j*randn(size(modulated_word)));
-%%Or usisng : awgn = (modulated_word,SNR)
+%% AWGN Channel
+% Add noise to the modulated signal to simulate the communication channel
 
-%%Signal received 
-rx_signal = awgn + modulated_word;
+awgn_noise = noise_std*(randn(size(modulated_word)) + 1j*randn(size(modulated_word)));
+
+%% Alternative implementation:
+% awgn_noise = awgn(modulated_word,SNR)
+
+%% Received signal
+rx_signal = awgn_noise + modulated_word;
 
 rx_signal = rx_signal.';
-
-
-
-
-

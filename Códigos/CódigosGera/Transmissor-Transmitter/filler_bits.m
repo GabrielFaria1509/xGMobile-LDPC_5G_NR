@@ -1,23 +1,30 @@
-function [u, F] = filler_bits(mensagem, G)
-    % Extraio capacidade de informação da matriz G
-    k_G = height(G);
-    
-    B = length(mensagem); % Pacote de dados
-    
-    if B ~= k_G
-        F = k_G - B;
-        
+function [code_block_with_filler, F] = filler_bits(code_block, G)
+
+    % Information length supported by the generator matrix
+    K = height(G);
+
+    B = length(code_block);
+
+    if B ~= K
+
+        F = K - B;
+
         if F < 0
-            error("The pack is larger than the matrix. Increase o Zc.");
+            error("The code block is larger than the generator matrix. Increase Zc.");
         end
-        
-        filler_bits = -1*ones(1, F); % Vetor para concatenar na mensagem
-        % Marcados como -1(equivalente NULL) temporariamente para permitir a multiplicação com G
-        u = [mensagem, filler_bits];
+
+        % Filler bits are temporarily represented by -1 (NULL)
+        filler = -1 * ones(1, F);
+
+        code_block_with_filler = [code_block, filler];
 
     else
+
         F = 0;
-        u = mensagem; % No filler bits needed, just return the original message
-        
+
+        % No filler bits are required
+        code_block_with_filler = code_block;
+
     end
+
 end

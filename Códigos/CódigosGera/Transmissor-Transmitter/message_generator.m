@@ -1,5 +1,7 @@
-%% Função para Gerar a Mensagem Original do Usuário
-function msg_original = message_generator(tamanho_pacote)
-    % Gera o pacote de dados real (ex: dados do WhatsApp) com 'tamanho_pacote' bits
-    msg_original = randi([0 1], 1, tamanho_pacote);
+%% Generate the Transport Block
+function transport_block = message_generator(transport_block_size)
+
+    % Generate a random Transport Block with the specified number of bits
+    transport_block = randi([0 1], 1, transport_block_size);
+
 end
