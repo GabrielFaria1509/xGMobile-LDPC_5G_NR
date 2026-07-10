@@ -62,7 +62,6 @@ AWGN Channel
 Received Signal
 
 
-
 Main Transmitter Parameters
 
 The transmitter functions receive parameters based on the 5G NR physical layer specifications.
@@ -178,7 +177,6 @@ RV sequence:
 RV0 → RV2 → RV3 → RV1
 
 
-
 Each redundancy version contains a different portion of the circular buffer defined by the rate matching procedure.
 
 The generated outputs are:
@@ -189,16 +187,13 @@ rx_3 → RV3
 rx_4 → RV1
 
 
-
 These signals are later combined by the receiver using HARQ soft combining.
 
 Main Functions
 
 transmitterfull()
 
-Purpose
-
-Main transmitter pipeline.
+Purpose: Main transmitter pipeline.
 
 This function integrates all transmitter stages:
 
@@ -214,7 +209,7 @@ Modulation;
 
 Noise addition.
 
-Inputs
+Inputs:
 
 Parameter
 
@@ -240,7 +235,7 @@ SNR
 
 Channel SNR
 
-Outputs
+Outputs:
 
 Output
 
@@ -282,13 +277,7 @@ H
 
 LDPC parity-check matrix
 
-Code Block Segmentation
-
-Function:
-
 codeBlockSegmentation()
-
-
 
 Responsible for dividing the transport block into smaller blocks compatible with LDPC encoding.
 
@@ -304,13 +293,7 @@ Filler bits
 
 When the message exceeds the maximum LDPC block size, segmentation is required.
 
-LDPC Encoding
-
-Function:
-
 ldpc_encoder()
-
-
 
 Generates parity bits according to the selected Base Graph and lifting size.
 
@@ -324,13 +307,7 @@ Input information bits
 
 to produce the encoded code block.
 
-Rate Matching & Interleaving
-
-Function:
-
 RateMatching()
-
-
 
 Implements the circular buffer procedure and bit interleaving defined by 3GPP TS 38.212.
 
@@ -348,13 +325,7 @@ Bit Interleaving (mitigates burst errors over the wireless channel).
 
 The output length is controlled by the available resources E.
 
-Modulation
-
-Function:
-
 ModulatorProcess()
-
-
 
 Transforms binary coded information into complex symbols.
 
@@ -375,7 +346,6 @@ Symbol Mapping
 Complex QAM Symbols
 
 
-
 Channel Model
 
 The transmitter includes an AWGN channel simulation.
@@ -387,7 +357,6 @@ $$\sigma=\sqrt{\frac{1}{2 \cdot Q_m \cdot 10^{SNR/10}}}$$
 The generated noise is added to the modulated signal:
 
 Received Signal = Transmitted Signal + Noise
-
 
 
 Development Notes
@@ -408,25 +377,18 @@ Validate modifications using CRC verification.
 
 References
 
-$$1$$
+[1] 3GPP TS 38.212 "NR; Multiplexing and channel coding"
 
- 3GPP TS 38.212
-"NR; Multiplexing and channel coding"
+[2] 3GPP TS 38.211 "NR; Physical channels and modulation"
 
-$$2$$
-
- 3GPP TS 38.211
-"NR; Physical channels and modulation"
-
-$$3$$
-
- 3GPP TS 38.214
-"NR; Physical layer procedures for data"
+[3] 3GPP TS 38.214 "NR; Physical layer procedures for data"
 
 Project Information
 
 Project: xGMobile
+
 Institution: Instituto Nacional de Telecomunicações (Inatel)
+
 Research Area: 5G NR Physical Layer / LDPC Channel Coding
 
 This module is part of an academic research project developed within the Inatel research environment, aiming to contribute to advanced wireless communication studies and future-generation mobile networks.
