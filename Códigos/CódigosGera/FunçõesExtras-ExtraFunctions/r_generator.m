@@ -1,11 +1,23 @@
-function r = Gerador_r(y, p)
-   
-r = zeros([1 length(y)]);
+function llr_values = LLRGenerator(received_bits, crossover_probability)
 
-for i = 1:length(y)
-    if y(i) == 1
-        r(i) = log(p/(1-p));
+%% LLR Generation for Binary Symmetric Channel (BSC)
+% Computes the Log-Likelihood Ratio (LLR) values based on the received
+% binary sequence and the channel crossover probability.
+
+llr_values = zeros(1, length(received_bits));
+
+for i = 1:length(received_bits)
+
+    if received_bits(i) == 1
+
+        llr_values(i) = log(crossover_probability / (1 - crossover_probability));
+
     else
-        r(i) = log((1-p)/p);
+
+        llr_values(i) = log((1 - crossover_probability) / crossover_probability);
+
     end
+
+end
+
 end
