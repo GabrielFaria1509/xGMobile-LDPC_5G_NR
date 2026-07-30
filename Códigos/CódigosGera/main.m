@@ -19,6 +19,7 @@ E = 250;           % Maximum physical resources
 Q_m = 2;           % Modulation Order (2 = QPSK)
 
 SNR_dB = 8;        % Signal-to-Noise Ratio (dB)
+                    %EbN0 
 
 I_max = 100;       % Maximum number of LDPC decoder iterations
 

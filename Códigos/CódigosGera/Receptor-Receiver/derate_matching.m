@@ -50,6 +50,7 @@ function llr_signal = derate_matching(demodulated_signal, BG_number, Zc, Q_m, TB
 
     if BG_number == 1
 
+        N_cb = 0;
         N_cb = Zc * 66;
 
         filler_bits = 22 * Zc - TBS;
@@ -79,6 +80,7 @@ function llr_signal = derate_matching(demodulated_signal, BG_number, Zc, Q_m, TB
     elseif BG_number == 2
 
 
+        N_cb = 0;
         N_cb = Zc * 50;
 
         filler_bits = 10 * Zc - TBS;

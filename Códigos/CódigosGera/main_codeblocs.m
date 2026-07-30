@@ -16,21 +16,24 @@ A = 4000;          % Original message size (bits)
 R = 1/3;           % Code Rate
 E = 15000;         % Total resources after Rate Matching (bits)
 Q_m = 2;           % Modulation Order (2 = QPSK)
-SNR_dB = 5;        % Channel Signal-to-Noise Ratio (Decrease to force HARQ)
+EbN0_dB = 3;%Equal as SNR        % Channel Signal-to-Noise Ratio (Decrease to force HARQ)
+                    
 
 
 fprintf('==========================================================\n');
 fprintf(' Starting 5G NR LDPC Simulation \n');
 fprintf(' Message Size (A)      : %d bits\n', A);
 fprintf(' Modulation (Q_m)      : %d\n', Q_m);
-fprintf(' SNR                   : %d dB\n', SNR_dB);
+fprintf(' SNR                   : %d dB\n', EbN0_dB);
 fprintf('==========================================================\n');
 
 
 %% 2. ORIGINAL MESSAGE GENERATION
 
-msg_original = message_generator(A);
+transport_block = message_generator(A);
 
+%%
+BG_number = Base_Graph_selector(A,R);
 
 %% 3. TRANSMITTER AND CHANNEL (Pipeline)
 
@@ -38,8 +41,38 @@ fprintf('\n[TX] Processing Transmitter...\n');
 
 % transmitterfull performs encoding, modulation and noise addition
 % according to the defined SNR value
+TB_CRC = crc_generator(transport_block);
+TB_with_CRC = [transport_block, TB_CRC];
+B = length(TB_with_CRC);
 
-[rx_1, rx_2, rx_3, rx_4, C, BG, Zc, B, H] = transmitterfull(msg_original, R, E, Q_m, SNR_dB);
+   % 1. Code Block Segmentation
+   [code_blocks, C, K_prime] = codeBlockSegmentation(TB_with_CRC, BG_number);
+
+   % Lifting size and matrix generation
+    Zc = Zc_selector(K_prime, BG_number);
+
+    BG = baseGraph_generator(BG_number, Zc);
+
+    H = H_matrix_generator(BG, Zc);
+
+    G = G_matrix_generator_2(H, Zc);
+
+    % 2. Code Block CRC Attachment
+    code_blocks_with_crc = codeblockcrcimplementation(code_blocks, C);
+
+    % 3. Filler Bits Insertion
+    code_blocks_with_filler = codeBlockFiller(code_blocks_with_crc, C, G);
+
+    % 4. LDPC Encoding
+    encoded_code_blocks = codeBlockEncoding(code_blocks_with_filler, C, G);
+     
+    for i = 1:C
+
+        filler_indices = find(code_blocks_with_filler{i} == -1);
+
+        encoded_code_blocks{i}(filler_indices) = -1;
+
+    end
 
 
 fprintf('[TX] Transmission completed. Extracted parameters:\n');
@@ -47,6 +80,34 @@ fprintf('[TX] Transmission completed. Extracted parameters:\n');
 fprintf('     -> Code Blocks (C) : %d\n', C);
 fprintf('     -> Base Graph      : %d\n', BG);
 fprintf('     -> Zc              : %d\n', Zc);
+
+ %% === DEBUG INFORMATION ===
+
+    fprintf('\n--- PIPELINE DEBUG ---\n');
+    fprintf('TB with CRC length        : %d\n', length(TB_with_CRC));
+    fprintf('Zc                        : %d\n', Zc);
+    fprintf('Generator matrix G        : %d x %d\n', size(G,1), size(G,2));
+    fprintf('Code Block with filler    : %d\n', length(code_blocks_with_filler{1}));
+    fprintf('Encoded Code Block        : %d\n', length(encoded_code_blocks{1}));
+    fprintf('Required puncturing       : %d bits\n', 2 * Zc);
+    fprintf('--------------------------\n\n');
+
+    % 5. Rate Matching
+    [rate_matched_RV1, rate_matched_RV2, ...
+     rate_matched_RV3, rate_matched_RV4] = ...
+     codeBlockRateMatching(encoded_code_blocks, C, E, BG_number, Zc, Q_m);
+
+     % Modulation
+    final_message_modulated  = ModulatorProcess(rate_matched_RV1, Q_m, EbN0_dB,R);
+    final_message_modulated2 = ModulatorProcess(rate_matched_RV2, Q_m, EbN0_dB,R);
+    final_message_modulated3 = ModulatorProcess(rate_matched_RV3, Q_m, EbN0_dB,R);
+    final_message_modulated4 = ModulatorProcess(rate_matched_RV4, Q_m, EbN0_dB,R);
+
+    % Prepare the received signals for further processing
+    rx_1 = final_message_modulated;
+    rx_2 = final_message_modulated2;
+    rx_3 = final_message_modulated3;
+    rx_4 = final_message_modulated4;
 
 
 %% 4. RECEPTION, DECODING AND HARQ
@@ -72,7 +133,7 @@ end
 % Extracts the size of each code block (K_perblock) using segmentation
 % with the selected Base Graph
 
-[~, ~, K_perblock, ~] = codeBlockSegmentation(zeros(1, B), BG);
+[~, ~, K_perblock, ~] = codeBlockSegmentation(zeros(1, B), BG_number);
 
 
 if C > 1
@@ -106,7 +167,7 @@ for attempt = 1 : 4
     rx_signal = harq_transmissions{attempt};
 
 
-    rx_llr = ReceiverEntry(rx_signal, Q_m, SNR_dB);
+    rx_llr = ReceiverEntry(rx_signal, Q_m, EbN0_dB,R);
 
 
     % Conditional Buffer Execution
@@ -114,11 +175,11 @@ for attempt = 1 : 4
 
     if attempt == 1
 
-        dematched_blocks = codeBlockRateDematching(rx_llr, C, E, BG, Zc, Q_m, K_actual, attempt);
+        dematched_blocks = codeBlockRateDematching(rx_llr, C, E, BG_number, Zc, Q_m, K_actual, attempt);
 
     else
 
-        dematched_blocks = codeBlockRateDematching(rx_llr, C, E, BG, Zc, Q_m, K_actual, attempt, harq_buffer);
+        dematched_blocks = codeBlockRateDematching(rx_llr, C, E, BG_number, Zc, Q_m, K_actual, attempt, harq_buffer);
 
     end
 
@@ -155,7 +216,7 @@ for attempt = 1 : 4
         fprintf('[SUCCESS] Transport CRC (%s) Valid on attempt %d!\n', transport_crc_type, attempt);
 
 
-        real_errors = sum(msg_original(:) ~= received_message(:));
+        real_errors = sum(transport_block(:) ~= received_message(:));
 
 
         if real_errors == 0
@@ -177,7 +238,7 @@ for attempt = 1 : 4
     else
 
 
-        number_of_errors = sum(received_message(:) ~= msg_original(:));
+        number_of_errors = sum(received_message(:) ~= transport_block(:));
 
 
         fprintf('[FAILURE] Invalid CRC. Incorrect bits on attempt %d: %d bits.\n', attempt, number_of_errors);
