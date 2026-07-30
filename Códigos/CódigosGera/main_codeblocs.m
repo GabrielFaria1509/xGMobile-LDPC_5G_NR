@@ -12,7 +12,7 @@ addpath(genpath(pwd));
 
 % You can modify these values later to test the channel limits
 
-A = 1000;          % Original message size (bits)
+A = 4000;          % Original message size (bits)
 R = 1/3;           % Code Rate
 E = 15000;         % Total resources after Rate Matching (bits)
 Q_m = 2;           % Modulation Order (2 = QPSK)
