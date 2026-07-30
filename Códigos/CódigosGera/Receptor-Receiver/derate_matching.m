@@ -1,4 +1,4 @@
-function llr_signal = derate_matching(demodulated_signal, BG, Zc, Q_m, TBS, attempt, buffer_in)
+function llr_signal = derate_matching(demodulated_signal, BG_number, Zc, Q_m, TBS, attempt, buffer_in)
 
     % The 'buffer_in' parameter avoids argument mismatch errors and allows
     % HARQ soft combining between retransmissions
@@ -6,7 +6,7 @@ function llr_signal = derate_matching(demodulated_signal, BG, Zc, Q_m, TBS, atte
     arguments
 
         demodulated_signal
-        BG
+        BG_number
         Zc
         Q_m
         TBS
@@ -48,7 +48,7 @@ function llr_signal = derate_matching(demodulated_signal, BG, Zc, Q_m, TBS, atte
     %% 3. BUFFER INITIALIZATION AND STARTING POSITION (k0)
 
 
-    if BG == 1
+    if BG_number == 1
 
         N_cb = Zc * 66;
 
@@ -76,7 +76,7 @@ function llr_signal = derate_matching(demodulated_signal, BG, Zc, Q_m, TBS, atte
         end
 
 
-    elseif BG == 2
+    elseif BG_number == 2
 
 
         N_cb = Zc * 50;

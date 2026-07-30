@@ -1,8 +1,28 @@
-function demodulated_signal = ReceiverEntry(rx_signal,Q_m,EbN0_dB,R)
+<<<<<<< HEAD
+function demodulated_signal = ReceiverEntry(rx_signal,Q_m,SNR)
+    %% Recovering the SNR 
+    %E = 1;
+    %SNR_L = 10^(SNR/10);
+    %sigma  = sqrt(E/(2*SNR_L));
+    sigma = sqrt(1./(2*Q_m*10.^(SNR/10)));
+    
+    %% Variancy is the square of the standard deviation
+    %% The standard deviation is called sigma, we must multiply by 2 since we
+    %% have the real axis and the imaginary axis
+    variancy_noise = 2*(sigma^2);
+    
+    %% extracting llr - soft decision
+    demodulated_signal_matrix = qamdemod(rx_signal,2^Q_m,...
+=======
+function demodulated_signal = ReceiverEntry(rx_signal,Qm,SNR)
 
     %% Recovering noise parameters from SNR
 
-    sigma = sqrt(1./(R*Q_m*10.^(EbN0_dB/10)));
+    E = 1;
+
+    SNR_linear = 10^(SNR/10);
+
+    sigma = sqrt(E/(2*SNR_linear));
 
 
     %% Noise variance calculation
@@ -15,7 +35,7 @@ function demodulated_signal = ReceiverEntry(rx_signal,Q_m,EbN0_dB,R)
 
     %% LLR extraction - Soft Decision Demodulation
 
-    demodulated_signal_matrix = qamdemod(rx_signal,2^Q_m,...
+    demodulated_signal_matrix = qamdemod(rx_signal,2^Qm
         "UnitAveragePower",true,...
         "OutputType","llr",...
         "NoiseVariance",noise_variance);

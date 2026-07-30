@@ -1,4 +1,4 @@
-function rx_signal = ModulatorProcess(f_interleaved,Q_m,SNR)
+function rx_signal = ModulatorProcess(f_interleaved,Q_m,EbN0_dB,R)
 
 %% Modulation process
 
@@ -9,11 +9,8 @@ f_interleaved = bi2de(reshape(f_interleaved,Q_m,[]).',"left-msb");
 modulated_word = qammod(f_interleaved,2^Q_m,'UnitAveragePower', true);
 
 %% SNR calculation process
-%E = 1;
-%SNR_linear = 10^(SNR/10);
-%sigma = sqrt(E/(2*SNR_linear));
 
-noise_std = sqrt(1./(2*Q_m*10.^(SNR/10)));
+noise_std = sqrt(1./(R*Q_m*10.^(EbN0_dB/10)));
 
 %% AWGN Channel
 % Add noise to the modulated signal to simulate the communication channel
