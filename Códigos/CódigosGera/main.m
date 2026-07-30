@@ -18,7 +18,7 @@ R = 1/2;           % Target Code Rate
 E = 250;           % Maximum physical resources
 Q_m = 2;           % Modulation Order (2 = QPSK)
 
-SNR_dB = 8;        % Signal-to-Noise Ratio (dB)
+SNR_dB = 3;        % Signal-to-Noise Ratio (dB)
                     %EbN0 
 
 I_max = 100;       % Maximum number of LDPC decoder iterations
@@ -30,15 +30,50 @@ fprintf('--- STARTING 5G xGMobile SIMULATION ---\n');
 
 A = input("Enter the message size to be transmitted: "); % Original message size (bits)
 
-msg_original = message_generator(A);
+transport_message= message_generator(A);
 
 disp("Generated message:")
-disp(msg_original);
+disp(transport_message);
 
 
 fprintf('\n[TX] Transmitting packets (Generating all RVs simultaneously)...\n');
 
-[rx_1, rx_2, rx_3, rx_4, BG, Zc, B, c, H] = transmitter(msg_original, R, E, Q_m, SNR_dB);
+%[rx_1, rx_2, rx_3, rx_4, BG, Zc, B, c, H] = transmitter(msg_original, R, E, Q_m, SNR_dB);
+
+TB_CRC = crc_generator(transport_message);
+
+TB_with_CRC = [transport_message, TB_CRC];
+
+    B = A + length(TB_CRC);
+
+    BG_number = Base_Graph_selector(A, R);
+
+    Zc = Zc_selector(B, BG_number);
+
+    BG = baseGraph_generator(BG_number, Zc);
+
+    H = H_matrix_generator(BG, Zc);
+
+    G = G_matrix_generator_2(H, Zc);
+
+    code_block_with_filler = filler_bits(TB_with_CRC, G);
+
+    codeword = codeword_generator(code_block_with_filler, G);
+
+    rate_matched_RV1 = RateMatching(codeword, BG_number, Zc, E, Q_m, 1);
+    rate_matched_RV2 = RateMatching(codeword, BG_number, Zc, E, Q_m, 2);
+    rate_matched_RV3 = RateMatching(codeword, BG_number, Zc, E, Q_m, 3);
+    rate_matched_RV4 = RateMatching(codeword, BG_number, Zc, E, Q_m, 4);
+
+    final_message_modulated = ModulatorProcess(rate_matched_RV1, Q_m, SNR_dB,R);
+    final_message_modulated2 = ModulatorProcess(rate_matched_RV2, Q_m, SNR_dB,R);
+    final_message_modulated3 = ModulatorProcess(rate_matched_RV3, Q_m, SNR_dB,R);
+    final_message_modulated4 = ModulatorProcess(rate_matched_RV4, Q_m, SNR_dB,R);
+
+    rx_1 = final_message_modulated;
+    rx_2 = final_message_modulated2;
+    rx_3 = final_message_modulated3;
+    rx_4 = final_message_modulated4;
 
 
 success = false;
@@ -68,12 +103,12 @@ for attempt = 1 : 4
 
     fprintf('   [Demodulator] Calculating channel LLR probabilities...\n');
 
-    channel_llrs = ReceiverEntry(received_signal, Q_m, SNR_dB);
+    channel_llrs = ReceiverEntry(received_signal, Q_m, SNR_dB,R);
 
 
     fprintf('   [De-Rate Matching] Reconstructing Circular Buffer...\n');
 
-    harq_buffer = derate_matching(channel_llrs, BG, Zc, Q_m, B, attempt, harq_buffer);
+    harq_buffer = derate_matching(channel_llrs, BG_number, Zc, Q_m, B, attempt, harq_buffer);
 
 
     fprintf('   [LDPC] Running Min-Sum Decoder...\n');
@@ -84,7 +119,7 @@ for attempt = 1 : 4
     recovered_message = recovered_LDPC_word(1:A);
 
 
-    errors = sum(msg_original(:) ~= recovered_message(:));
+    errors = sum(transport_message(:) ~= recovered_message(:));
 
 
     if errors == 0
