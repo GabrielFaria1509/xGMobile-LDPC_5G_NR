@@ -1,7 +1,7 @@
 function [final_message_modulated1, final_message_modulated2, ...
           final_message_modulated3, final_message_modulated4, ...
           BG_number, Zc, B, codeword, H] = ...
-          transmitter_BER(transport_block, E, Q_m, SNR, BG_number, Zc, H, G)
+          transmitter_BER(transport_block, E, Q_m, SNR, BG_number, Zc, H, G,R)
 
     A = length(transport_block);
 
@@ -20,9 +20,9 @@ function [final_message_modulated1, final_message_modulated2, ...
     rate_matched_RV3 = RateMatching(codeword, BG_number, Zc, E, Q_m, 3);
     rate_matched_RV4 = RateMatching(codeword, BG_number, Zc, E, Q_m, 4);
 
-    final_message_modulated1  = ModulatorProcess(rate_matched_RV1, Q_m, SNR);
-    final_message_modulated2 = ModulatorProcess(rate_matched_RV2, Q_m, SNR);
-    final_message_modulated3 = ModulatorProcess(rate_matched_RV3, Q_m, SNR);
-    final_message_modulated4 = ModulatorProcess(rate_matched_RV4, Q_m, SNR);
+    final_message_modulated1  = ModulatorProcess(rate_matched_RV1, Q_m, SNR,R);
+    final_message_modulated2 = ModulatorProcess(rate_matched_RV2, Q_m, SNR,R);
+    final_message_modulated3 = ModulatorProcess(rate_matched_RV3, Q_m, SNR,R);
+    final_message_modulated4 = ModulatorProcess(rate_matched_RV4, Q_m, SNR,R);
 
 end
