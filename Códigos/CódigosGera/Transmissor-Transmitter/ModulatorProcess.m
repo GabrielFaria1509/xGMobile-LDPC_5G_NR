@@ -10,7 +10,7 @@ modulated_word = qammod(f_interleaved,2^Q_m,'UnitAveragePower', true);
 
 %% SNR calculation process
 
-noise_std = sqrt(1./(R*Q_m*10.^(EbN0_dB/10)));
+noise_std = sqrt(1./(2*R*Q_m*10.^(EbN0_dB/10)));
 
 %% AWGN Channel
 % Add noise to the modulated signal to simulate the communication channel
