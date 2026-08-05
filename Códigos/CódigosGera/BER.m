@@ -9,15 +9,18 @@ addpath(genpath(pwd));
 R = 1/2;           % Taxa de Código Alvo (Code Rate)
 Q_m = 2;           % Ordem de Modulação (2 = QPSK)
 A = 500;           % Tamanho da mesnsagem
-EbN0_dB_vector = 0:0.5:3;     % Relação Sinal-Ruído(Relação Sinal-Ruído)
+EbN0_dB_vector = 0:0.5:5;     % Relação Sinal-Ruído(Relação Sinal-Ruído)
 
-I_max = 3;      %Iterações máximas do Min-Sum
-minErros = 100;      % mínimo de erros desejado
-minFrames = 50;     % mínimo de palavras simuladas
-maxFrames = 7000;    % limite máximo de palavras
+I_max = 10;      %Iterações máximas do Min-Sum
+minErros = 50;      % mínimo de erros desejado
+minBlocos = 5;     % mínimo de blocos simulados
+maxBlocos = 50;    % limite máximo de blocos
+
+HARQ = 1;           % Limite de chamadas HARQ
 
 
 BER_Totais = zeros(1,length(EbN0_dB_vector));
+BLER_Totais = zeros(1,length(EbN0_dB_vector));
 
 %gerando matriz G para economizar tempo
 message = message_generator(A);
@@ -40,11 +43,13 @@ for k = 1:length(EbN0_dB_vector)
     SNR_dB = EbN0_dB_vector(k);
     errosTotais = 0;
     bitsTotais = 0;
-    frame = 0;
+    blocosErradosTotais = 0;
+    blocosTotais = 0;
 
-    while ((errosTotais < minErros) || (frame < minFrames)) && (frame < maxFrames)
+    blocos = 0;
+    while ((errosTotais < minErros) || (blocos < minBlocos)) && (blocos < maxBlocos)
+        blocos = blocos + 1;
 
-        frame = frame + 1;
         % gera mensagem
         msg_original = message_generator(A);
 
@@ -69,7 +74,7 @@ for k = 1:length(EbN0_dB_vector)
         buffer_harq = -1;
         erros = 0;
         
-        for attempt = 1 : 4
+        for attempt = 1 : HARQ
             if attempt == 1
                 sinal_recebido = rx_1; % Tenta decodificar o RV=0 primeiro
             elseif attempt == 2
@@ -91,29 +96,41 @@ for k = 1:length(EbN0_dB_vector)
             end
         end
 
-        % conta erros
+        % conta erros para o BER
         errosTotais = errosTotais + erros;
         bitsTotais = bitsTotais + A;
 
+        % conta erros para o BLER
+        if erros > 0
+            blocosErradosTotais = blocosErradosTotais + 1;
+        end
+        blocosTotais = blocosTotais + 1;
+
         fprintf(['SNR = %.1f dB | Frame = %4d | ' ...
-             'Erros = %4d | BER = %.3e\n'], ...
-             SNR_dB, frame, errosTotais, errosTotais/bitsTotais);
+             'Erros = %4d | BER = %.3e' ...
+             'BlocosErrados = %4d | BLER = %.3e\n'], ...
+             SNR_dB, blocos, errosTotais, errosTotais/bitsTotais, ...
+             blocosErradosTotais, blocosErradosTotais/blocosTotais);
 
     end
 
     
-    BER_Totais(k)=errosTotais/bitsTotais;
+    BER_Totais(k) = errosTotais/bitsTotais;
+    BLER_Totais(k) = blocosErradosTotais/blocosTotais;
 
     fprintf('\n---------------------------------------\n');
     fprintf('SNR %.1f dB finalizada\n',SNR_dB);
-    fprintf('Frames simulados : %d\n',frame);
+    fprintf('Blocos simulados : %d\n',blocos);
+    fprintf('BLER             : %.3e\n',BLER_Totais(k));
     fprintf('Bits simulados   : %d\n',bitsTotais);
     fprintf('BER              : %.3e\n',BER_Totais(k));
     fprintf('---------------------------------------\n\n');
 
 end
-BER_Totais
+BER_Totais(BER_Totais<1/(maxBlocos*A)) = 1/(maxBlocos*A)
+BLER_Totais(BLER_Totais<1/(maxBlocos)) = 1/(maxBlocos)
 
+% Gerando a curva BER
 figure
 semilogy(EbN0_dB_vector, BER_Totais, '-o', ...
     'LineWidth', 2, ...
@@ -127,13 +144,57 @@ ylabel('BER', 'FontSize', 12)
 title('Curva BER x SNR', 'FontSize', 14)
 
 set(gca, 'FontSize', 11)
-xlim([0 7])
+xlim([0 max(EbN0_dB_vector)+1])
 
 % Ajuste o eixo Y conforme seus dados
-if any(BER_Totais==0)
-    ymin = 1e-8;
-else
-    ymin = min(BER_Totais);
+ymin = min(BER_Totais);
+
+ylim([ymin 1]);
+
+% Salvando a curva BER
+pasta = 'C:\Users\zepte\Documents\xGMobile\GitHub\XGMoblie\Resultados';
+if ~exist(pasta, 'dir')
+    mkdir(pasta);
 end
 
+nome = sprintf('BER_R(%.2f)_E(%d)_Qm(%d)_A(%d)_IMax(%d)_Erros(%d)_HARQ(%d).fig', ...
+    R, E, Q_m, A, I_max, minErros, HARQ);
+
+arquivo = fullfile(pasta, nome);
+savefig(gcf, arquivo);
+
+
+
+
+%Gerando a curva BLER
+figure
+semilogy(EbN0_dB_vector, BLER_Totais, '-o', ...
+    'LineWidth', 2, ...
+    'MarkerSize', 8);
+
+grid on
+grid minor
+
+xlabel('SNR (dB)', 'FontSize', 12)
+ylabel('BLER', 'FontSize', 12)
+title('Curva BLER x SNR', 'FontSize', 14)
+
+set(gca, 'FontSize', 11)
+xlim([0 max(EbN0_dB_vector)+1])
+
+% Ajuste o eixo Y conforme seus dados
+ymin = min(BLER_Totais);
+
 ylim([ymin 1e-1]);
+
+% Salvando a curva BLER
+pasta = 'C:\Users\zepte\Documents\xGMobile\GitHub\XGMoblie\Resultados\BLER';
+if ~exist(pasta, 'dir')
+    mkdir(pasta);
+end
+
+nome = sprintf('BLER_R(%.2f)_E(%d)_Qm(%d)_A(%d)_IMax(%d)_Erros(%d)_HARQ(%d).fig', ...
+    R, E, Q_m, A, I_max, minErros, HARQ);
+
+arquivo = fullfile(pasta, nome);
+savefig(gcf, arquivo);

@@ -28,7 +28,7 @@ function demodulated_signal = ReceiverEntry(rx_signal,Q_m,EbN0_dB,R)
 
     % 1. Limit maximum confidence to avoid Inf values and decoder overflow
 
-    LLR_MAX = 50;
+    LLR_MAX = 3;
 
     demodulated_signal(demodulated_signal > LLR_MAX) = LLR_MAX;
 
