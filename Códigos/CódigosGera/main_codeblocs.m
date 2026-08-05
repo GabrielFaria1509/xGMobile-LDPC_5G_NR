@@ -12,11 +12,11 @@ addpath(genpath(pwd));
 
 % You can modify these values later to test the channel limits
 
-A = 4000;          % Original message size (bits)
+A = 100;          % Original message size (bits)
 R = 1/3;           % Code Rate
-E = 15000;         % Total resources after Rate Matching (bits)
+E = 1000;         % Total resources after Rate Matching (bits)
 Q_m = 2;           % Modulation Order (2 = QPSK)
-EbN0_dB = 3;%Equal as SNR        % Channel Signal-to-Noise Ratio (Decrease to force HARQ)
+EbN0_dB = 1;%Equal as SNR        % Channel Signal-to-Noise Ratio (Decrease to force HARQ)
                     
 
 
@@ -32,8 +32,6 @@ fprintf('==========================================================\n');
 
 transport_block = message_generator(A);
 
-%%
-BG_number = Base_Graph_selector(A,R);
 
 %% 3. TRANSMITTER AND CHANNEL (Pipeline)
 
@@ -44,6 +42,10 @@ fprintf('\n[TX] Processing Transmitter...\n');
 TB_CRC = crc_generator(transport_block);
 TB_with_CRC = [transport_block, TB_CRC];
 B = length(TB_with_CRC);
+
+
+%%
+BG_number = Base_Graph_selector(A,R);
 
    % 1. Code Block Segmentation
    [code_blocks, C, K_prime] = codeBlockSegmentation(TB_with_CRC, BG_number);
@@ -78,7 +80,7 @@ B = length(TB_with_CRC);
 fprintf('[TX] Transmission completed. Extracted parameters:\n');
 
 fprintf('     -> Code Blocks (C) : %d\n', C);
-fprintf('     -> Base Graph      : %d\n', BG);
+fprintf('     -> Base Graph      : %d\n', BG_number);
 fprintf('     -> Zc              : %d\n', Zc);
 
  %% === DEBUG INFORMATION ===
