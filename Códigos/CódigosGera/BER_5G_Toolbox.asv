@@ -1,0 +1,134 @@
+clear;
+clc;
+
+%% Parâmetros
+
+K = 512;                 % Bits de informação
+R = 1/2;                 % Taxa alvo
+Qm = 2;                  % QPSK
+
+EbN0_dB = 0:1:5;
+
+maxIter = 25;
+
+minErrors = 300;
+minFrames = 100;
+maxFrames = 1000;
+
+BER = zeros(size(EbN0_dB));
+
+
+%% Simulação
+txBits = randi([0 1],K,1);
+tb = nrCRCEncode(txBits,"24A");
+
+BG_number = Base_Graph_selector(K, R);
+B = length(tb);
+Zc = Zc_selector(B,BG_number);
+
+Kb = (BG_number == 1)*22 + (BG_number == 2)*10;
+Kcb = Kb*Zc;
+
+for isnr = 1:length(EbN0_dB)
+
+    EbN0 = EbN0_dB(isnr);
+
+    errors = 0;
+    totalBits = 0;
+    frame = 0;
+
+    while ((errors < minErrors) || (frame < minFrames)) && frame < maxFrames
+
+        frame = frame + 1;
+
+        %% Geração da mensagem
+
+        txBits = randi([0 1],K,1);
+
+        %% CRC
+
+        tb = nrCRCEncode(txBits,"24A");
+
+        %% Segmentação
+
+        cbs = nrCodeBlockSegmentLDPC(tb,BG_number);
+
+        %% LDPC Encoder
+        coded = nrLDPCEncode(cbs, BG_number);
+
+        %% Rate Matching
+
+        E_target = ceil(Kcb/R);
+        E = min(E_target,8192);
+        E = floor(E/Qm)*Qm;
+
+        tx = nrRateMatchLDPC(coded,E,0,"QPSK",1);
+
+        %% Modulação
+
+        modSig = nrSymbolModulate(tx,"QPSK");
+
+        %% Canal AWGN
+
+        EsN0 = EbN0 + 10*log10(R*Qm);
+
+        rxSig = awgn(modSig,EsN0,"measured");
+
+        %% Variância do ruído
+
+        noiseVar = 10^(-EsN0/10);
+
+        %% Demodulação Soft
+
+        %llr = nrSymbolDemodulate(rxSig,"QPSK",noiseVar);%com ruido
+        llr = nrSymbolDemodulate(modSig,"QPSK",noiseVar);%sem ruido
+
+        %% Rate Recovery
+
+        rec = nrRateRecoverLDPC(llr,length(tb),R,0,"QPSK",1);
+
+        %% LDPC Decoder
+
+        dec = nrLDPCDecode(rec,BG_number,maxIter, Algorithm='Normalized min-sum'); %SAINDO ERRADO
+        %% Desegmentação
+
+        tbHat = nrCodeBlockDesegmentLDPC(dec,BG_number,K+24);
+
+        %% CRC
+
+        rxBits = nrCRCDecode(tbHat,"24A");
+
+        %% BER
+        errors = errors + sum(rxBits ~= txBits);
+
+        totalBits = totalBits + K;
+
+    end
+
+    BER(isnr) = errors/totalBits;
+
+    fprintf("Eb/N0 = %.1f dB | BER = %.3e | Frames = %d\n",...
+        EbN0,BER(isnr),frame);
+
+end
+
+% Gerando a curva BER
+figure
+semilogy(EbN0_dB, BER, '-o', ...
+    'LineWidth', 2, ...
+    'MarkerSize', 8);
+
+grid on
+grid minor
+
+xlabel('SNR (dB)', 'FontSize', 12)
+ylabel('BER', 'FontSize', 12)
+title('Curva BER x SNR', 'FontSize', 14)
+
+set(gca, 'FontSize', 11)
+xlim([0 max(EbN0_dB)+1])
+
+% Ajuste o eixo Y conforme seus dados
+ymin = min(BER);
+
+ylim([ymin 1]);

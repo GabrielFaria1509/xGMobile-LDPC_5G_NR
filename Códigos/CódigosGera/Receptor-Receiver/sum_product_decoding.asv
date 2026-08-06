@@ -35,16 +35,16 @@ function z = sum_product_decoding(H, r, I_maximo)
     for I = 1:I_maximo
         
         % 1. Atualização dos Check Nodes (Horizontal)
-        %for j = 1:m
-        %    for i = B{j}
-        %        vizinhos = M(j, B{j}(B{j} ~= i));
-        %        sinal = prod(sign(vizinhos) + (vizinhos==0));
-        %        
-        %        % Aplicação do Min-Sum com fator de normalização
-        %        valor_min = min(abs(vizinhos));
-        %        E(j,i) = sinal * valor_min * alpha; 
-        %    end
-        %end
+        for j = 1:m
+            for i = B{j}
+                vizinhos = M(j, B{j}(B{j} ~= i));
+                sinal = prod(sign(vizinhos) + (vizinhos==0));
+                
+                % Aplicação do Min-Sum com fator de normalização
+                valor_min = min(abs(vizinhos));
+                E(j,i) = sinal * valor_min * alpha; 
+            end
+        end
 
         % 1. Atualização dos Check Nodes (Horizontal)
         for j = 1:m
@@ -62,7 +62,7 @@ function z = sum_product_decoding(H, r, I_maximo)
             
             produto_total = prod(sinais);
             
-            for k = 1:numel(vizinhanca)
+            for k = 1:length(vizinhanca)
                 i = vizinhanca(k);
 
                 sinal = produto_total*sinais(k);

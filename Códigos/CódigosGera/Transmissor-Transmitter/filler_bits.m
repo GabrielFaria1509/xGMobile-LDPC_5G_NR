@@ -1,13 +1,9 @@
-function [code_block_with_filler, F] = filler_bits(code_block, G)
-
-    % Information length supported by the generator matrix
-    K = height(G);
-
+function [code_block_with_filler, F] = filler_bits(code_block, Kcb)
     B = length(code_block);
 
-    if B ~= K
+    if B ~= Kcb
 
-        F = K - B;
+        F = Kcb - B;
 
         if F < 0
             error("The code block is larger than the generator matrix. Increase Zc.");

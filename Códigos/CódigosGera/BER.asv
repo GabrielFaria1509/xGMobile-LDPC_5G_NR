@@ -12,11 +12,11 @@ A = 500;           % Tamanho da mesnsagem
 EbN0_dB_vector = 0:0.5:4;     % Relação Sinal-Ruído(Relação Sinal-Ruído)
 
 I_max = 10;      %Iterações máximas do Min-Sum
-minErros = 150;       % mínimo de erros desejado
-minBlocos = 50;       % mínimo de blocos simulados
+minErros = 150;      % mínimo de erros desejado
+minBlocos = 50;     % mínimo de blocos simulados
 maxBlocos = 10000;    % limite máximo de blocos
-E = 500;              % Recursos físicos máximo(Maximal physical resource)
 
+E = nlayers*Q_m*resource_blocks
 
 HARQ = 1;           % Limite de chamadas HARQ
 
@@ -39,7 +39,8 @@ Kb = (BG_number == 1)*22 + (BG_number == 2)*10;
 Kcb = Kb*Zc;
 
 K_eff = size(G,1);
-
+E = nlayers*Q_m*resource_blocks        % Recursos físicos máximo(Maximal physical resource)
+                            % E é calculado para satisfazer o code rate
        
                             
 for k = 1:length(EbN0_dB_vector)

@@ -1,4 +1,4 @@
-function llr_values = LLRGenerator(received_bits, crossover_probability)
+function llr_values = r_generator(received_bits, crossover_probability)
 
 %% LLR Generation for Binary Symmetric Channel (BSC)
 % Computes the Log-Likelihood Ratio (LLR) values based on the received
