@@ -9,12 +9,12 @@ addpath(genpath(pwd));
 R = 1/2;           % Taxa de Código Alvo (Code Rate)
 Q_m = 2;           % Ordem de Modulação (2 = QPSK)
 A = 500;           % Tamanho da mesnsagem
-EbN0_dB_vector = 3:0.5:4;     % Relação Sinal-Ruído(Relação Sinal-Ruído)
+EbN0_dB_vector = 0:0.5:6;     % Relação Sinal-Ruído(Relação Sinal-Ruído)
 
 I_max = 3;      %Iterações máximas do Min-Sum
-minErros = 150;       % mínimo de erros desejado
-minBlocos = 50;       % mínimo de blocos simulados
-maxBlocos = 200;    % limite máximo de blocos
+minErros = 300;       % mínimo de erros desejado
+minBlocos = 100;       % mínimo de blocos simulados
+maxBlocos = 1000;    % limite máximo de blocos
 E = 500;              % Recursos físicos máximo(Maximal physical resource)
 
 
