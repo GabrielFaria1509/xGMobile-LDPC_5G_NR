@@ -160,7 +160,7 @@ function llr_signal = derate_matching(demodulated_signal, BG_number, Zc, Q_m, TB
 
         if (index >= filler_low) && (index <= filler_high)
 
-            buffer(index) = 100; % Infinite confidence for NULL bits
+            buffer(index) = inf; % Infinite confidence for NULL bits
 
             j = j + 1;
 

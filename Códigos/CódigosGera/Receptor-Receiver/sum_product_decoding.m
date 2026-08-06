@@ -18,7 +18,7 @@ function z = sum_product_decoding(H, r, I_maximo)
     end
     
     % Inicialização da matriz de mensagens M
-    M = sparse(m, n);
+    M = zeros(m, n);
     for j = 1:m
         for i = B{j}
             M(j,i) = r(i);
@@ -27,7 +27,7 @@ function z = sum_product_decoding(H, r, I_maximo)
     
     % Pré-alocação da matriz E com a mesma estrutura esparsa de H
     % Isso evita o gargalo de realocar memória a cada iteração
-    E = spalloc(m, n, nnz(H)); 
+    E = zeros(m, n, nnz(H)); 
     
     alpha = 0.75; % Fator de atenuação para o Normalized Min-Sum (Melhora o ganho de SNR)
     
