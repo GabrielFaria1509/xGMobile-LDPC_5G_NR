@@ -63,7 +63,9 @@ BG_number = Base_Graph_selector(A,R);
     code_blocks_with_crc = codeblockcrcimplementation(code_blocks, C);
 
     % 3. Filler Bits Insertion
-    code_blocks_with_filler = codeBlockFiller(code_blocks_with_crc, C, G);
+    Kb = (BG_number == 1)*22 + (BG_number == 2)*10;
+    Kcb = Kb*Zc;
+    code_blocks_with_filler = codeBlockFiller(code_blocks_with_crc, C, Kcb);
 
     % 4. LDPC Encoding
     encoded_code_blocks = codeBlockEncoding(code_blocks_with_filler, C, G);

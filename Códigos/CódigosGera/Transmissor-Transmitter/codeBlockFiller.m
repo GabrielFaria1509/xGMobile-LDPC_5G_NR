@@ -1,4 +1,4 @@
-function code_blocks_with_filler = codeBlockFiller(code_blocks_with_crc, C, G)
+function code_blocks_with_filler = codeBlockFiller(code_blocks_with_crc, C, Kcb)
 
     code_blocks_with_filler = cell(1, C);
 
@@ -6,7 +6,7 @@ function code_blocks_with_filler = codeBlockFiller(code_blocks_with_crc, C, G)
 
         code_block = code_blocks_with_crc{i};
 
-        processed_code_block = filler_bits(code_block, G);
+        processed_code_block = filler_bits(code_block, Kcb);
 
         code_blocks_with_filler{i} = processed_code_block;
 

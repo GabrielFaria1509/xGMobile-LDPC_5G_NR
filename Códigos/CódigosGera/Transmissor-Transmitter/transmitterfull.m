@@ -33,10 +33,12 @@ function [final_message_modulated, final_message_modulated2, ...
     code_blocks_with_crc = codeblockcrcimplementation(code_blocks, C);
 
     % 3. Filler Bits Insertion
-    code_blocks_with_filler = codeBlockFiller(code_blocks_with_crc, C, G);
+    Kb = (BG_number == 1)*22 + (BG_number == 2)*10;
+    Kcb = Kb*Zc;
+    code_blocks_with_filler = codeBlockFiller(code_blocks_with_crc, C, Kcb);
 
     % 4. LDPC Encoding
-    encoded_code_blocks = codeBlockEncoding(code_blocks_with_filler, C, G);
+    encoded_code_blocks = codeBlockEncoding(code_blocks_with_filler, C, Kcb);
 
     for i = 1:C
 

@@ -56,7 +56,10 @@ TB_with_CRC = [transport_message, TB_CRC];
 
     G = G_matrix_generator_2(H, Zc);
 
-    code_block_with_filler = filler_bits(TB_with_CRC, G);
+    Kb = (BG_number == 1)*22 + (BG_number == 2)*10;
+    Kcb = Kb*Zc;
+
+    code_block_with_filler = filler_bits(TB_with_CRC, Kcb);
 
     codeword = codeword_generator(code_block_with_filler, G);
 
