@@ -1,4 +1,4 @@
-function decoded_blocks = codeBlockDecoding(dematched_blocks, C, K_perblock, H, max_iter)
+function decoded_blocks = codeBlockDecoding(dematched_blocks, C, K_perblock, H, max_iter,B_variable,A_check)
 
     decoded_blocks = cell(1, C);
 
@@ -28,7 +28,7 @@ function decoded_blocks = codeBlockDecoding(dematched_blocks, C, K_perblock, H, 
 
         % 2. LDPC Decoding (using the optimized NMSA decoder)
 
-        estimated_bits = sum_product_decoding(H, llr_block, max_iter);
+        estimated_bits = ldpc_nmsa_decoder(H, llr_block, max_iter,B_variable,A_check);
 
 
 

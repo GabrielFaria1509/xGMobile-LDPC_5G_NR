@@ -1,4 +1,4 @@
-function z = sum_product_decoding(H, r, I_maximo)
+function z = MinSumAlgorithm(H, r, I_maximo)
     % Nota: Esta função implementa o Normalized Min-Sum Algorithm (NMSA), 
     % que é o padrão de hardware para decodificadores LDPC 5G.
     
@@ -27,24 +27,12 @@ function z = sum_product_decoding(H, r, I_maximo)
     
     % Pré-alocação da matriz E com a mesma estrutura esparsa de H
     % Isso evita o gargalo de realocar memória a cada iteração
-    E = zeros(m, n, nnz(H)); 
+    E = zeros(m,n); 
     
     alpha = 0.75; % Fator de atenuação para o Normalized Min-Sum (Melhora o ganho de SNR)
     
     %% ================= O LAÇO DE DECODIFICAÇÃO =================
     for I = 1:I_maximo
-        
-        % 1. Atualização dos Check Nodes (Horizontal)
-        %for j = 1:m
-        %    for i = B{j}
-        %        vizinhos = M(j, B{j}(B{j} ~= i));
-        %        sinal = prod(sign(vizinhos) + (vizinhos==0));
-        %        
-        %        % Aplicação do Min-Sum com fator de normalização
-        %        valor_min = min(abs(vizinhos));
-        %        E(j,i) = sinal * valor_min * alpha; 
-        %    end
-        %end
 
         % 1. Atualização dos Check Nodes (Horizontal)
         for j = 1:m

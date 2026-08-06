@@ -14,8 +14,8 @@ addpath(genpath(pwd));
 
 A = 100;          % Original message size (bits)
 R = 1/3;           % Code Rate
-E = 1000;         % Total resources after Rate Matching (bits)
-Q_m = 2;           % Modulation Order (2 = QPSK)
+E = 500;         % Total resources after Rate Matching (bits)
+Q_m = 8;           % Modulation Order (2 = QPSK)
 EbN0_dB = 1;%Equal as SNR        % Channel Signal-to-Noise Ratio (Decrease to force HARQ)
                     
 
@@ -56,6 +56,9 @@ BG_number = Base_Graph_selector(A,R);
     BG = baseGraph_generator(BG_number, Zc);
 
     H = H_matrix_generator(BG, Zc);
+
+    %Sub-divisions of H
+    [B_variable,A_check] = ldpc_graph_generator(H);
 
     G = G_matrix_generator_2(H, Zc);
 
@@ -195,7 +198,7 @@ for attempt = 1 : 4
 
     % LDPC Channel Decoding
 
-    decoded_blocks = codeBlockDecoding(dematched_blocks, C, K_perblock, H, max_iter);
+    decoded_blocks = codeBlockDecoding(dematched_blocks, C, K_perblock, H, max_iter,B_variable,A_check);
 
 
     % Code Block Desegmentation and CRC-24B validation

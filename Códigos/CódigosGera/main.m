@@ -116,7 +116,7 @@ for attempt = 1 : 4
 
     fprintf('   [LDPC] Running Min-Sum Decoder...\n');
 
-    recovered_LDPC_word = sum_product_decoding(H, harq_buffer, I_max);
+    recovered_LDPC_word = MinSumAlgorithm(H, harq_buffer, I_max);
 
 
     recovered_message = recovered_LDPC_word(1:A);
