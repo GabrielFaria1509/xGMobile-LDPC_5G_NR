@@ -2,24 +2,25 @@ clear; clc;
 
 % Adiciona todas as subpastas (Transmissor, Receptor, etc.) ao path do MATLAB
 % IMPORTANTE: Certifique-se de que o "Current Folder" do MATLAB é a pasta 'CódigosGera'
-addpath(genpath(pwd));
+%addpath(genpath(pwd));
 
 
 %%%% 1. PARÂMETROS DO SISTEMA
 R = 1/2;           % Taxa de Código Alvo (Code Rate)
 Q_m = 2;           % Ordem de Modulação (2 = QPSK)
 A = 500;           % Tamanho da mesnsagem
-EbN0_dB_vector = 0:0.5:6;     % Relação Sinal-Ruído(Relação Sinal-Ruído)
+EbN0_dB_vector = 2:0.5:6;     % Relação Sinal-Ruído(Relação Sinal-Ruído)
 
-I_max = 3;      %Iterações máximas do Min-Sum
+I_max = 10;      %Iterações máximas do Min-Sum
 minErros = 300;       % mínimo de erros desejado
 minBlocos = 100;       % mínimo de blocos simulados
 maxBlocos = 1000;    % limite máximo de blocos
-E = 500;              % Recursos físicos máximo(Maximal physical resource)
+E = 1000;              % Recursos físicos máximo(Maximal physical resource)
 
 
-HARQ = 4;           % Limite de chamadas HARQ
+HARQ = 1;           % Limite de chamadas HARQ
 
+R_eff = A/E;
 
 BER_Totais = zeros(1,length(EbN0_dB_vector));
 BLER_Totais = zeros(1,length(EbN0_dB_vector));
@@ -31,6 +32,7 @@ B = A + length(CRC);
 BG_number = Base_Graph_selector(A, R);
 Zc = Zc_selector(B,BG_number);
 BG = baseGraph_generator(BG_number, Zc);
+
 H = H_matrix_generator(BG, Zc);
 G = G_matrix_generator_2(H,Zc);
 [B_graph,A_graph] = ldpc_graph_generator(H);
@@ -69,10 +71,10 @@ for k = 1:length(EbN0_dB_vector)
         rate_matched_RV3 = RateMatching(codeword, BG_number, Zc, E, Q_m, 3);
         rate_matched_RV4 = RateMatching(codeword, BG_number, Zc, E, Q_m, 4);
 
-        rx_1 = ModulatorProcess(rate_matched_RV1, Q_m, SNR_dB, R);
-        rx_2 = ModulatorProcess(rate_matched_RV2, Q_m, SNR_dB, R);
-        rx_3 = ModulatorProcess(rate_matched_RV3, Q_m, SNR_dB, R);
-        rx_4 = ModulatorProcess(rate_matched_RV4, Q_m, SNR_dB, R);
+        rx_1 = ModulatorProcess(rate_matched_RV1, Q_m, SNR_dB, R_eff);
+        rx_2 = ModulatorProcess(rate_matched_RV2, Q_m, SNR_dB, R_eff);
+        rx_3 = ModulatorProcess(rate_matched_RV3, Q_m, SNR_dB, R_eff);
+        rx_4 = ModulatorProcess(rate_matched_RV4, Q_m, SNR_dB, R_eff);
 
         buffer_harq = -1;
         erros = 0;
@@ -88,7 +90,7 @@ for k = 1:length(EbN0_dB_vector)
                 sinal_recebido = rx_4; % Puxa o RV=1
             end
 
-            llrs_canal = ReceiverEntry(sinal_recebido, Q_m, SNR_dB,R);
+            llrs_canal = ReceiverEntry(sinal_recebido, Q_m, SNR_dB,R_eff);
             buffer_harq = derate_matching(llrs_canal, BG_number, Zc, Q_m, B, attempt, buffer_harq);
             palavra_recuperada_LDPC = ldpc_nmsa_decoder(H,buffer_harq,I_max,B_graph,A_graph);
             mensagem_recuperada = palavra_recuperada_LDPC(1:A);

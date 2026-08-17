@@ -1,4 +1,4 @@
-function rx_signal = ModulatorProcess(f_interleaved,Qm,SNR)
+function rx_signal = ModulatorProcess(f_interleaved,Qm,SNR, R)
 
 %%Modulation process
 
