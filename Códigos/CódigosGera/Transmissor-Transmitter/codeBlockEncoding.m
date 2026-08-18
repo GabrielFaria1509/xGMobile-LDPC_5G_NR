@@ -12,7 +12,7 @@ function encoded_code_blocks = codeBlockEncoding(code_blocks_with_filler, C, G)
         code_block_GF2(code_block_GF2 == -1) = 0;
 
         % Encode the processed Code Block
-        encoded_code_blocks{i} = codeword_generator(code_block_GF2, G);
+        encoded_code_blocks{i} = codeword_generator(code_block_GF2,G);
 
     end
 end

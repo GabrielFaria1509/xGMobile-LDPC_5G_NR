@@ -22,6 +22,7 @@ SNR_dB = 3;        % Signal-to-Noise Ratio (dB)
                     %EbN0 
 
 I_max = 100;       % Maximum number of LDPC decoder iterations
+R_eff = A/E;
 
 
 fprintf('\n======================================================\n');
@@ -68,10 +69,10 @@ TB_with_CRC = [transport_message, TB_CRC];
     rate_matched_RV3 = RateMatching(codeword, BG_number, Zc, E, Q_m, 3);
     rate_matched_RV4 = RateMatching(codeword, BG_number, Zc, E, Q_m, 4);
 
-    final_message_modulated = ModulatorProcess(rate_matched_RV1, Q_m, SNR_dB,R);
-    final_message_modulated2 = ModulatorProcess(rate_matched_RV2, Q_m, SNR_dB,R);
-    final_message_modulated3 = ModulatorProcess(rate_matched_RV3, Q_m, SNR_dB,R);
-    final_message_modulated4 = ModulatorProcess(rate_matched_RV4, Q_m, SNR_dB,R);
+    final_message_modulated = ModulatorProcess(rate_matched_RV1, Q_m, SNR_dB,R_eff);
+    final_message_modulated2 = ModulatorProcess(rate_matched_RV2, Q_m, SNR_dB,R_eff);
+    final_message_modulated3 = ModulatorProcess(rate_matched_RV3, Q_m, SNR_dB,R_eff);
+    final_message_modulated4 = ModulatorProcess(rate_matched_RV4, Q_m, SNR_dB,R_eff);
 
     rx_1 = final_message_modulated;
     rx_2 = final_message_modulated2;
@@ -106,7 +107,7 @@ for attempt = 1 : 4
 
     fprintf('   [Demodulator] Calculating channel LLR probabilities...\n');
 
-    channel_llrs = ReceiverEntry(received_signal, Q_m, SNR_dB,R);
+    channel_llrs = ReceiverEntry(received_signal, Q_m, SNR_dB,R_eff);
 
 
     fprintf('   [De-Rate Matching] Reconstructing Circular Buffer...\n');

@@ -17,6 +17,8 @@ R = 1/3;           % Code Rate
 E = 500;         % Total resources after Rate Matching (bits)
 Q_m = 8;           % Modulation Order (2 = QPSK)
 EbN0_dB = 1;%Equal as SNR        % Channel Signal-to-Noise Ratio (Decrease to force HARQ)
+
+R_eff = A/E; %Effecctive code rate
                     
 
 
@@ -105,10 +107,10 @@ fprintf('     -> Zc              : %d\n', Zc);
      codeBlockRateMatching(encoded_code_blocks, C, E, BG_number, Zc, Q_m);
 
      % Modulation
-    final_message_modulated  = ModulatorProcess(rate_matched_RV1, Q_m, EbN0_dB,R);
-    final_message_modulated2 = ModulatorProcess(rate_matched_RV2, Q_m, EbN0_dB,R);
-    final_message_modulated3 = ModulatorProcess(rate_matched_RV3, Q_m, EbN0_dB,R);
-    final_message_modulated4 = ModulatorProcess(rate_matched_RV4, Q_m, EbN0_dB,R);
+    final_message_modulated  = ModulatorProcess(rate_matched_RV1, Q_m, EbN0_dB,R_eff);
+    final_message_modulated2 = ModulatorProcess(rate_matched_RV2, Q_m, EbN0_dB,R_eff);
+    final_message_modulated3 = ModulatorProcess(rate_matched_RV3, Q_m, EbN0_dB,R_eff);
+    final_message_modulated4 = ModulatorProcess(rate_matched_RV4, Q_m, EbN0_dB,R_eff);
 
     % Prepare the received signals for further processing
     rx_1 = final_message_modulated;
@@ -174,7 +176,7 @@ for attempt = 1 : 4
     rx_signal = harq_transmissions{attempt};
 
 
-    rx_llr = ReceiverEntry(rx_signal, Q_m, EbN0_dB,R);
+    rx_llr = ReceiverEntry(rx_signal, Q_m, EbN0_dB,R_eff);
 
 
     % Conditional Buffer Execution
