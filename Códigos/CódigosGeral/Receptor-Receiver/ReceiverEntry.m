@@ -1,8 +1,8 @@
-function demodulated_signal = ReceiverEntry(rx_signal,Q_m,EbN0_dB,R)
+function demodulated_signal = ReceiverEntry(rx_signal,Q_m,EbN0_dB,Reff)
 
     %% Recovering noise parameters from SNR
 
-    sigma = sqrt(1./(2*R*Q_m*10.^(EbN0_dB/10)));
+    sigma = sqrt(1./(2*Reff*Q_m*10.^(EbN0_dB/10)));
 
 
     %% Noise variance calculation
