@@ -9,11 +9,11 @@ clear; clc;
 R = 1/2;           % Taxa de Código Alvo (Code Rate)
 Q_m = 2;           % Ordem de Modulação (2 = QPSK)
 A = 500;           % Tamanho da mesnsagem
-EbN0_dB_vector = 2:0.5:6;     % Relação Sinal-Ruído(Relação Sinal-Ruído)
+EbN0_dB_vector = 0:0.5:4;     % Relação Sinal-Ruído(Relação Sinal-Ruído)
 
 I_max = 10;      %Iterações máximas do Min-Sum
 minErros = 300;       % mínimo de erros desejado
-minBlocos = 100;       % mínimo de blocos simulados
+minBlocos = 200;       % mínimo de blocos simulados
 maxBlocos = 1000;    % limite máximo de blocos
 E = 1000;              % Recursos físicos máximo(Maximal physical resource)
 
@@ -34,13 +34,11 @@ Zc = Zc_selector(B,BG_number);
 BG = baseGraph_generator(BG_number, Zc);
 
 H = H_matrix_generator(BG, Zc);
-G = G_matrix_generator_2(H,Zc);
 [B_graph,A_graph] = ldpc_graph_generator(H);
 
 Kb = (BG_number == 1)*22 + (BG_number == 2)*10;
 Kcb = Kb*Zc;
 
-K_eff = size(G,1);
 
        
                             
@@ -64,7 +62,7 @@ for k = 1:length(EbN0_dB_vector)
         TB_with_CRC = [msg_original, TB_CRC];
         B = A + length(TB_CRC);
         code_block_with_filler = filler_bits(TB_with_CRC, Kcb);
-        codeword = codeword_generator(code_block_with_filler, G);
+        codeword = H_matrix_codeword_generator(code_block_with_filler,H,Zc,BG_number);
 
         rate_matched_RV1 = RateMatching(codeword, BG_number, Zc, E, Q_m, 1);
         rate_matched_RV2 = RateMatching(codeword, BG_number, Zc, E, Q_m, 2);
@@ -92,7 +90,12 @@ for k = 1:length(EbN0_dB_vector)
 
             llrs_canal = ReceiverEntry(sinal_recebido, Q_m, SNR_dB,R_eff);
             buffer_harq = derate_matching(llrs_canal, BG_number, Zc, Q_m, B, attempt, buffer_harq);
-            palavra_recuperada_LDPC = ldpc_nmsa_decoder(H,buffer_harq,I_max,B_graph,A_graph);
+
+            if decoder_nmsa == true
+                palavra_recuperada_LDPC = ldpc_nmsa_decoder(H,buffer_harq,I_max,B_graph,A_graph);
+            else
+                
+
             mensagem_recuperada = palavra_recuperada_LDPC(1:A);
             erros = sum(msg_original(:) ~= mensagem_recuperada(:));
         
