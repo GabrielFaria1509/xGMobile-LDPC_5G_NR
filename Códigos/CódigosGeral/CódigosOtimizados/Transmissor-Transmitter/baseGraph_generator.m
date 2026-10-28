@@ -1,4 +1,4 @@
-function BG = baseGraph_generator(BG_number, Zc)
+function [BG, i_ls] = baseGraph_generator(BG_number, Zc)
     %% ====================================================================
     % FUNCTION: baseGraph_generator
     % DESCRIPTION: Generates the selected LDPC Base Graph by applying the

@@ -1,50 +1,34 @@
+
 function G = G_matrix_generator_2(H, Zc)
 
-% Convert to full matrix (gf() does not accept sparse matrices)
-H = full(H);
+    % Dimensoes da matriz
+    H = full(H);
 
-% Matrix dimensions
-[M, N] = size(H);
+    [M, N] = size(H);
+    K = N - M;
+    M_core = 4 * Zc;
 
-% Number of information bits
-K = N - M;
+    % Particionamento da matriz H
+    A = H(:, 1:K);
+    B = H(:, K+1:N);
 
-% Split the parity-check matrix H
-% A: information part
-% B: parity part
-disp("Generating G matrix. This may take longer for larger Zc values.")
+    A1 = A(1:M_core, :);
+    A2 = A(M_core+1:end, :);
 
-A = H(:, 1:K);
-B = H(:, K+1:N);
+    B1 = B(1:M_core, 1:M_core);
+    B2 = B(M_core+1:end, 1:M_core);
 
-% Number of rows corresponding to the parity core
-M_core = 4 * Zc;
+    % Etapa 1: resolve em GF(2)
+    P1_gf = gf(B1) \ gf(A1);
+    P1 = double(P1_gf.x);
 
-% Partition the matrices
-A1 = A(1:M_core, :);
-A2 = A(M_core+1:end, :);
+    % Etapa 2: calcula P2 em GF(2)
+    P2 = mod(A2 + B2 * P1, 2);
 
-B1 = B(1:M_core, 1:M_core);
-B2 = B(M_core+1:end, 1:M_core);
+    % Monta a matriz de paridade
+    P = [P1; P2];
 
-% -------------------------------------------------------------------------
-% Generator matrix computation
-% -------------------------------------------------------------------------
-
-% Step 1: Solve P1 over GF(2)
-P1_gf = gf(B1) \ gf(A1);
-P1 = double(P1_gf.x);
-
-% Step 2: Compute P2
-P2 = mod(A2 + B2 * P1, 2);
-
-% Combine parity matrices
-P = [P1; P2];
-
-% Identity matrix
-I = speye(K);
-
-% Generator matrix
-G = [I, P'];
+    % Matriz geradora
+    G = [speye(K), P'];
 
 end

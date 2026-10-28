@@ -1,106 +1,100 @@
-function bits_sistematicos = gerador_bits_sistematicos(message, core, topo, Zc, BGn)
-
-    resultados = mod(message * topo', 2);
-
-    [m, n] = size(core);
-
-    % Matriz aumentada
-    A = [core resultados'];
-
-    % Organiza as equações
-    A_org = organizador(A, Zc,BGn);
-
-    solucao_encontrada = false;
-
-    if BGn == 1
-        start = 2;
-    else
-        start = 1;
-    end
-    % Testa x1 = 1 e depois x1 = 0
-    for bit_inicial = [true false]
-
-        % Vetor de valores
-        bits_sistematicos = false(1, n);
-
-        % Máscara indicando quais bits já conhecemos
-        bits_conhecidos = false(1, n);
-
-        % Condição inicial
-        bits_sistematicos(start) = bit_inicial;
-        bits_conhecidos(start) = true;
-
-        % =====================================================
-        % PROPAGAÇÃO
-        % =====================================================
-
-        for i = 1:m-1
-
-            % Coeficientes da equação
-            linha = logical(A_org(i, 1:n));
-
-            % Resultado da equação
-            resultado = logical(A_org(i, n+1));
-
-            % Bits desconhecidos presentes nesta equação
-            posicao_desconhecido = ...
-                linha & ~bits_conhecidos;
-
-            % Verificação importante durante desenvolvimento
-            if nnz(posicao_desconhecido) ~= 1
-                error( ...
-                    "A equação %d não possui exatamente um bit desconhecido.", ...
-                    i ...
-                );
-            end
-
-            % Bits conhecidos que participam da equação
-            conhecidos = linha & bits_conhecidos;
-
-            % XOR dos conhecidos
-            xor_conhecidos = ...
-                mod(sum(bits_sistematicos(conhecidos)), 2);
-
-            % x_desconhecido XOR xor_conhecidos = resultado
-            %
-            % portanto:
-            %
-            % x_desconhecido = resultado XOR xor_conhecidos
-
-            valor_deseconhecido = ...
-                xor(resultado, logical(xor_conhecidos));
-
-            % Salva novo bit
-            bits_sistematicos(posicao_desconhecido) = ...
-                valor_deseconhecido;
-
-            % Marca como conhecido
-            bits_conhecidos(posicao_desconhecido) = true;
-
+    function bits_sistematicos = gerador_bits_sistematicos(message, core, topo, Zc, BGn, i_ls)
+    
+        [m, n] = size(core);
+    
+        % Calcula os resultados das equacoes
+        resultados = mod(message * topo', 2);
+        resultados = resultados(:);
+    
+        % Pre-calcula a ordem das linhas, sem reorganizar a matriz
+        i = (1:m)';
+        grupo = floor((i - 1) / 4) + 1;
+        posicao = mod(i - 1, 4) + 1;
+    
+        if BGn == 1
+            sequencia = [1, 4, 3, 2];
+        elseif BGn == 2
+            sequencia = [1, 2, 4, 3];
+        else
+            error("BGn invalido.");
         end
-
-        % =====================================================
-        % VERIFICAÇÃO FINAL
-        % =====================================================
-
-        linha = logical(A_org(m, 1:n));
-        resultado = logical(A_org(m, n+1));
-
-        resultado_calculado = ...
-            mod(sum(bits_sistematicos(linha)), 2);
-
-        if resultado_calculado == resultado
-
+    
+        bloco = reshape(sequencia(posicao), [], 1);
+    
+        if BGn == 1 && Zc == 208
+    
+            deslocamento = mod((grupo - 1) * 105, 208);
+            ordem = Zc * (bloco - 1) + deslocamento + 1;
+    
+        elseif (BGn == 2 && i_ls ~= 3 && i_ls ~= 7) || ...
+               (BGn == 1 && i_ls == 6)
+    
+            ordem = Zc * (bloco - 1) + grupo;
+    
+        else
+    
+            ordem = Zc * bloco - grupo + 1;
+    
+        end
+    
+        % Testa x1 = 1 e depois x1 = 0
+        for bit_inicial = [true false]
+    
+            bits_sistematicos = false(1, n);
+            bits_conhecidos = false(1, n);
+    
+            bits_sistematicos(1) = bit_inicial;
+            bits_conhecidos(1) = true;
+    
             solucao_encontrada = true;
-            break;
-
+    
+            % Propagacao das equacoes
+            for i = 1:m-1
+    
+                idx = ordem(i);
+    
+                % Acessa diretamente a matriz original
+                linha = core(idx, :) ~= 0;
+    
+                % Localiza o unico bit desconhecido
+                desconhecido = find(linha & ~bits_conhecidos);
+    
+                if numel(desconhecido) ~= 1
+                    error( ...
+                        "A equacao %d nao possui exatamente um bit desconhecido.", ...
+                        i ...
+                    );
+                end
+    
+                % XOR dos bits conhecidos:
+                % os bits desconhecidos ainda possuem valor zero
+                paridade = mod(nnz(linha & bits_sistematicos), 2);
+    
+                % Resolve a equacao em GF(2)
+                bits_sistematicos(desconhecido) = ...
+                    xor(logical(resultados(idx)), logical(paridade));
+    
+                bits_conhecidos(desconhecido) = true;
+    
+            end
+    
+            % Verificacao da ultima equacao
+            idx = ordem(m);
+            linha = core(idx, :) ~= 0;
+    
+            resultado_calculado = mod( ...
+                nnz(linha & bits_sistematicos), 2);
+    
+            if resultado_calculado ~= resultados(idx)
+                solucao_encontrada = false;
+            end
+    
+            if solucao_encontrada
+                return;
+            end
+    
         end
-
+    
+        error("Nenhuma solucao foi encontrada.");
+    
     end
-
-    if ~solucao_encontrada
-        error("Nenhuma solução foi encontrada.");
-
-    end
-
-end
