@@ -25,7 +25,6 @@ function testador_gc = testador_gc()
 
         [BG, i_ls] = baseGraph_generator(BGn, Zc);
         H = H_matrix_generator(BG, Zc);
-        dados = ldpc_encode_nr_preprocess(H, Zc);
 
         fprintf('\n========================================\n');
         fprintf('Processando Zc = %d (%d/%d)\n', ...
@@ -39,13 +38,15 @@ function testador_gc = testador_gc()
             message = message_generator(Kb * Zc);
 
             tic;
-            codeword = ldpc_encode_nr_process(message,dados);
+
+            dados = ldpc_encode_nr_preprocess(H, Zc);
+            %codeword = ldpc_encode_nr_process(message,dados);
             tempos_individuais(i, j) = toc;
 
-            if sum(mod(H * codeword', 2)) ~= 0
-                error("Sindrome diferente de zero para Zc = %d, repeticao %d.", ...
-                    Zc, j);
-            end
+            %if sum(mod(H * codeword', 2)) ~= 0
+            %    error("Sindrome diferente de zero para Zc = %d, repeticao %d.", ...
+            %        Zc, j);
+            %end
 
         end
 
@@ -78,7 +79,7 @@ function testador_gc = testador_gc()
     grid on;
 
     % Salva o grafico em formato FIG
-    savefig(gcf, 'tempo_codificacao_LDPC_internet_prepro.fig');
+    savefig(gcf, 'tempo_codificacao_LDPC_internet_prepro_apenas.fig');
 
     % Retorna os dados
     testador_gc.Zc = Zc_valores;

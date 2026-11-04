@@ -25,7 +25,6 @@ function testador = testador()
 
         [BG, i_ls] = baseGraph_generator(BGn, Zc);
         H = H_matrix_generator(BG, Zc);
-        dados = H_matrix_codeword_preprocess(H,Zc,BGn,i_ls);
 
         fprintf('\n========================================\n');
         fprintf('Processando Zc = %d (%d/%d)\n', ...
@@ -41,13 +40,15 @@ function testador = testador()
             message = message_generator(Kb * Zc);
 
             tic;
-            codeword = H_matrix_codeword_generator_process(message,dados);
+
+            dados = H_matrix_codeword_preprocess(H,Zc,BGn,i_ls);
+            %codeword = H_matrix_codeword_generator_process(message,dados);
             tempos_individuais(i, j) = toc;
 
-            if sum(mod(H * codeword', 2)) ~= 0
-                error("Sindrome diferente de zero para Zc = %d, repeticao %d.", ...
-                    Zc, j);
-            end
+            %if sum(mod(H * codeword', 2)) ~= 0
+            %    error("Sindrome diferente de zero para Zc = %d, repeticao %d.", ...
+            %        Zc, j);
+            %end
 
         end
 
@@ -80,7 +81,7 @@ function testador = testador()
     grid on;
 
     % Salva o grafico em formato FIG
-    savefig(gcf, 'tempo_codificacao_LDPC_proposto_prepro.fig');
+    savefig(gcf, 'tempo_codificacao_LDPC_proposto_prepro_apenas.fig');
 
     % Retorna os dados
     testador.Zc = Zc_valores;
