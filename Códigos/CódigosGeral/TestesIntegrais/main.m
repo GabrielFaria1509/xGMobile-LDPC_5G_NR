@@ -57,8 +57,8 @@ TB_with_CRC = [transport_message, TB_CRC];
     spy(H)
 
     title(sprintf('LDPC Parity-Check Matrix (Z_c = %d)', Zc), 'FontSize', 14)
-    xlabel('Column Index', 'FontSize', 12)
-    ylabel('Row Index', 'FontSize', 12)
+    xlabel('Bits', 'FontSize', 12)
+    ylabel('Equações de paridade', 'FontSize', 12)
 
     G = G_matrix_generator_2(H, Zc);
 
