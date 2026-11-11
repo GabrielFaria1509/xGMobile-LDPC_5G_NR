@@ -1,329 +1,411 @@
-%% Simulação de Tempo de Codificação LDPC 5G NR sob Adaptação Dinâmica de MCS
-% Comparação: Método Convencional (Matriz G) vs. Método Proposto (Two-Step H)
-% Cenários: Pedestre (Baixa Mobilidade) vs. Veicular (Alta Mobilidade)
-% Cadeia 3GPP TS 38.212 Completa Integrada:
-%   1. Base_Graph_selector.m
-%   2. crc_generator.m (CRC-16 / CRC-24A de TB e CRC-24B de CB)
-%   3. codeBlockSegmentation.m
-%   4. codeblockcrcimplementation.m
-%   5. Zc_selector.m
-%   6. codeBlockFiller.m (+ filler_bits.m)
-%   7. baseGraph_generator.m / H_matrix_generator.m / G_matrix_generator_2.m
-%   8. codeBlockEncoding.m (codeword_generator.m) vs. H_matrix_codeword_generator.m
+%% 5G NR LDPC Encoding Latency Benchmark under Dynamic MCS Adaptation
+% Structured according to the reference Monte Carlo pseudocode:
+%   - Loops: s (Nseeds) -> ch (scenarios) -> a (algorithms) -> f (Nframes) -> j (TBs)
+%   - 4D Tensor: tempo(a, ch, s, f)
+%   - Cumulative running average: cumsum(tempo, 4) ./ (1:Nframes)
+%   - Cross-seed aggregation with 95% Student-t Confidence Intervals (CI)
 
 clear; clc; close all;
 
-% Adiciona automaticamente todas as subpastas do projeto ao Path do MATLAB
+% Automatically add all project subfolders to the MATLAB path
 addpath(genpath(pwd));
 
-%% 1. PARÂMETROS E TABELA MCS 3GPP (TS 38.214 - Tabela 5.1.3.1-1)
-num_quadros = 20;
-cenarios = {'Pedestre', 'Veicular'};
-algoritmos = {'Convencional (Matriz G)', 'Proposto (Two-Step H)'};
+%% 1. SIMULATION PARAMETERS
+Nframes = 20;   % Change to 1000 for the final overnight run
+Nseeds  = 2;    % Change to 20 for the final overnight run
 
-% Tabela 5.1.3.1-1 (Índices 0 a 28): [Indice_MCS, Qm, R_nominal_x1024]
-tabela_MCS = [
-     0, 2, 120;   1, 2, 157;   2, 2, 193;   3, 2, 251;   4, 2, 308;
-     5, 2, 379;   6, 2, 449;   7, 2, 526;   8, 2, 602;   9, 2, 679;
-    10, 4, 340;  11, 4, 378;  12, 4, 434;  13, 4, 490;  14, 4, 553;
-    15, 4, 616;  16, 4, 658;  17, 6, 438;  18, 6, 466;  19, 6, 517;
-    20, 6, 567;  21, 6, 616;  22, 6, 666;  23, 6, 719;  24, 6, 772;
-    25, 6, 822;  26, 6, 873;  27, 6, 910;  28, 6, 948
-];
+cenarios   = {'Pedestre', 'Veicular'};
+algoritmos = {'Convencional', 'Richardson', 'Proposto'};
 
-% Recursos de Rádio de referência (51 PRBs, 12 subportadoras, 12 símbolos úteis/slot)
-N_RE_slot = 51 * 12 * 12;
+% Formal LaTeX labels for international publication (IEEE style)
+alg_labels_latex = { ...
+    'Conventional ($\mathbf{G}$ Matrix)', ...
+    'Richardson--Urbanke', ...
+    'Proposed (Two-Step $\mathbf{H}$)' ...
+};
 
-%% 2. FASE 2: VALIDAÇÃO DA CADEIA COMPLETA COM SEGMENTAÇÃO (MCS 5, 15 e 25)
-fprintf('=== FASE 2: Validando cadeia completa 3GPP (com codeBlockEncoding) ===\n');
-rng(10);
+num_algs = numel(algoritmos);
+num_ch   = numel(cenarios);
 
-for mcs_teste = [5, 15, 25]
-    Qm = tabela_MCS(mcs_teste + 1, 2);
-    R  = tabela_MCS(mcs_teste + 1, 3) / 1024;
+% 4D Timing Tensor (seconds): tempo(a, ch, s, f)
+tempo = zeros(num_algs, num_ch, Nseeds, Nframes);
+
+% Auxiliary statistics for the paper summary table
+stats_misses = zeros(num_algs, num_ch, Nseeds);
+stats_hits   = zeros(num_algs, num_ch, Nseeds);
+stats_CBs    = zeros(num_ch, Nseeds);
+stats_MCS_sw = zeros(num_ch, Nseeds);
+stats_BG_sw  = zeros(num_ch, Nseeds);
+stats_Zc_sw  = zeros(num_ch, Nseeds);
+
+% Store Seed 1 trace for panels (a) and (b)
+traco_plot = cell(1, num_ch);
+
+%% 2. MONTE CARLO BENCHMARK EXECUTION
+fprintf('=== Starting Monte Carlo Benchmark (Nframes=%d, Nseeds=%d) ===\n', Nframes, Nseeds);
+
+for s = 1:Nseeds
+    fprintf('\n--- Seed s = %d/%d ---\n', s, Nseeds);
     
-    % Cálculo do Tamanho do Bloco de Transporte (A) permitindo C >= 1
-    N_info = N_RE_slot * Qm * R * 0.35;
-    A = max(256, 8 * round(N_info / 8));
-    tb_bits = randi([0 1], 1, A);
-    
-    % 1. Seleção do Base Graph
-    BGn = Base_Graph_selector(A, R);
-    
-    % 2. CRC do Transport Block
-    tb_crc = crc_generator(tb_bits);
-    TB_with_CRC = [tb_bits, tb_crc];
-    
-    % 3. Segmentação em Code Blocks e aplicação do CRC-24B quando C > 1
-    [cbs_raw, C, K_prime, ~] = codeBlockSegmentation(TB_with_CRC, BGn);
-    cbs_crc = codeblockcrcimplementation(cbs_raw, C);
-    
-    % 4. Seleção de Zc e Kb a partir de K_prime
-    [Zc, Kb] = Zc_selector(K_prime, BGn);
-    
-    % 5. Preenchimento de Filler Bits (-1) até K_total = Kb_max * Zc
-    Kb_max = 22; if BGn == 2; Kb_max = 10; end
-    K_total = Kb_max * Zc;
-    cbs_filler = codeBlockFiller(cbs_crc, C, K_total);
-    
-    % 6. Matrizes estruturais para o par (BGn, Zc)
-    [BG_mat, i_ls] = baseGraph_generator(BGn, Zc);
-    H_mat = H_matrix_generator(BG_mat, Zc);
-    G_mat = G_matrix_generator_2(H_mat, Zc);
-    
-    % 7. Codificação Convencional via codeBlockEncoding.m
-    encoded_conv = codeBlockEncoding(cbs_filler, C, G_mat);
-    
-    % 8. Codificação Proposta e verificação em todos os C Code Blocks
-    for i = 1:C
-        cb_gf2 = cbs_filler{i};
-        cb_gf2(cb_gf2 == -1) = 0; % Mesma conversão temporária da codeBlockEncoding.m
+    for ch = 1:num_ch
+        % Generate trace once per seed/scenario; reuse across all algorithms
+        traco = gerar_traco_5gnr(cenarios{ch}, Nframes, s);
         
-        cw_prop = H_matrix_codeword_generator(cb_gf2, H_mat, Zc, BGn, i_ls);
-        cw_conv = encoded_conv{i};
+        if s == 1
+            traco_plot{ch} = traco;
+        end
         
-        diff_bits = any(cw_conv(:) ~= cw_prop(:));
-        sindrome  = any(mod(H_mat * double(cw_prop(:)), 2) ~= 0);
+        % Channel transition statistics for current seed
+        mcs_vec = arrayfun(@(x) x.TBs(1).MCS, traco);
+        bg_vec  = arrayfun(@(x) x.TBs(1).BGn, traco);
+        zc_vec  = arrayfun(@(x) x.TBs(1).Zc,  traco);
+        cb_vec  = arrayfun(@(x) sum([x.TBs.C]), traco);
         
-        if diff_bits || sindrome
-            error('Falha na validação para MCS %d no Code Block %d/%d!', mcs_teste, i, C);
+        stats_MCS_sw(ch, s) = sum(diff(mcs_vec) ~= 0);
+        stats_BG_sw(ch, s)  = sum(diff(bg_vec)  ~= 0);
+        stats_Zc_sw(ch, s)  = sum(diff(zc_vec)  ~= 0);
+        stats_CBs(ch, s)    = sum(cb_vec);
+        
+        for a = 1:num_algs
+            fprintf('  [%s | %s] Processing %d frames...\n', cenarios{ch}, algoritmos{a}, Nframes);
+            cache = criar_cache_vazio();
+            
+            for f = 1:Nframes
+                tQuadro = 0;
+                
+                for j = 1:numel(traco(f).TBs)
+                    tb = traco(f).TBs(j);
+                    chave = criar_chave_estrutura(tb);
+                    
+                    if ~cache_contem(cache, chave)
+                        stats_misses(a, ch, s) = stats_misses(a, ch, s) + 1;
+                        stats_hits(a, ch, s)   = stats_hits(a, ch, s) + (tb.C - 1);
+                        
+                        t0 = tic;
+                        dados = preparar_estrutura(algoritmos{a}, tb);
+                        tPrep = toc(t0);
+                        
+                        cache = guardar(cache, chave, dados);
+                    else
+                        stats_hits(a, ch, s) = stats_hits(a, ch, s) + tb.C;
+                        
+                        tPrep = 0;
+                        dados = consultar(cache, chave);
+                    end
+                    
+                    t0 = tic;
+                    cw = codificar_blocos_do_TB(algoritmos{a}, tb, dados);
+                    tEnc = toc(t0);
+                    
+                    % Out-of-benchmark syndrome validation (Seed 1, first 5 frames)
+                    if s == 1 && f <= 5
+                        validar_fora_do_benchmark(cw, tb, algoritmos{a});
+                    end
+                    
+                    tQuadro = tQuadro + tPrep + tEnc;
+                end
+                
+                tempo(a, ch, s, f) = tQuadro;
+            end
         end
     end
-    fprintf('  [OK] MCS %2d -> A=%5d, BG%d, C=%d CB(s), K''=%4d, Kb=%2d, Zc=%3d | Síndrome e Igualdade OK!\n', ...
-        mcs_teste, A, BGn, C, K_prime, Kb, Zc);
 end
 
-%% 3. FASE 3: GERAÇÃO DOS TRAÇOS DE TRANSMISSÃO (Fora do Cronômetro)
-fprintf('\n=== FASE 3: Gerando traços de transmissão (Pedestre vs. Veicular) ===\n');
-rng(42); % Semente fixa para reprodutibilidade científica
+%% 3. POST-PROCESSING: CUMULATIVE MEAN & 95% CONFIDENCE INTERVALS
+% Convert seconds to milliseconds (ms)
+tempo_ms = 1000 * tempo;
 
-tracos = struct();
-for ch = 1:2
-    MCS_seq = zeros(1, num_quadros);
-    A_seq   = zeros(1, num_quadros);
-    BG_seq  = zeros(1, num_quadros);
-    C_seq   = zeros(1, num_quadros);
-    Zc_seq  = zeros(1, num_quadros);
-    Kb_seq  = zeros(1, num_quadros);
-    cbs_cel = cell(1, num_quadros); % Guarda os C Code Blocks com filler (-1)
+% Cumulative average per realization along dimension 4: cumsum(..., 4) ./ (1:Nframes)
+divisor_N    = reshape(1:Nframes, 1, 1, 1, Nframes);
+media_acum_s = cumsum(tempo_ms, 4) ./ divisor_N; % Dimensions: (a, ch, s, f)
+
+% Aggregate across seeds (dimension 3) and compute 95% Student-t CI for each N
+media_agregada = reshape(mean(media_acum_s, 3), [num_algs, num_ch, Nframes]);
+if Nseeds > 1
+    std_agregado = reshape(std(media_acum_s, 0, 3), [num_algs, num_ch, Nframes]);
+    t_critico    = tinv(0.975, Nseeds - 1);
+    ic_95        = t_critico * (std_agregado / sqrt(Nseeds));
+else
+    ic_95 = zeros(num_algs, num_ch, Nframes);
+end
+
+%% 4. SUMMARY TABLE OUTPUT FOR THE MANUSCRIPT
+fprintf('\n=== AGGREGATED SUMMARY FOR PAPER TABLE (%d Seeds x %d Frames) ===\n', Nseeds, Nframes);
+for ch = 1:num_ch
+    total_cbs_med = mean(stats_CBs(ch, :));
+    misses_med    = mean(stats_misses(1, ch, :));
+    hits_med      = mean(stats_hits(1, ch, :));
+    hit_rate_med  = 100 * hits_med / total_cbs_med;
     
+    fprintf('Scenario: %s\n', cenarios{ch});
+    fprintf('  - Total Code Blocks/seed: %.1f (Mean: %.2f CB/Frame)\n', ...
+        total_cbs_med, total_cbs_med / Nframes);
+    fprintf('  - Mean Transitions: I_MCS = %.1f | BG = %.1f | Z_c = %.1f\n', ...
+        mean(stats_MCS_sw(ch, :)), mean(stats_BG_sw(ch, :)), mean(stats_Zc_sw(ch, :)));
+    fprintf('  - Mean Cache Misses (BG, Z_c): %.1f | Cache Hit Rate (per CB): %.1f%%\n', ...
+        misses_med, hit_rate_med);
+    
+    for a = 1:num_algs
+        m_final  = media_agregada(a, ch, end);
+        ic_final = ic_95(a, ch, end);
+        fprintf('  - %-12s -> Final Mean Latency: %8.3f +- %6.3f ms/frame\n', ...
+            algoritmos{a}, m_final, ic_final);
+    end
+    fprintf('\n');
+end
+
+%% 5. IEEE PUBLICATION-GRADE FIGURE GENERATION (LATEX FORMATTING)
+fig6 = figure('Name', 'Figure 6 - Dynamic MCS Adaptation Benchmark', ...
+              'Units', 'pixels', 'Position', [100, 80, 960, 640], ...
+              'Color', 'w', 'InvertHardcopy', 'off');
+
+tlo = tiledlayout(2, 2, 'TileSpacing', 'compact', 'Padding', 'compact');
+
+quadros_zoom = 1:min(100, Nframes);
+eixo_q       = 1:Nframes;
+
+% Colorblind-safe academic palette & distinct line styles for B&W print
+cores = [0.00, 0.45, 0.74;   % Deep Blue   - Conventional (G)
+         0.85, 0.33, 0.10;   % Burnt Orange - Richardson-Urbanke
+         0.13, 0.55, 0.13];  % Forest Green - Proposed (Two-Step H)
+estilos_linha = {'--', '-.', '-'};
+
+% --- Panel (a): Pedestrian MCS Sequence ---
+ax1 = nexttile(tlo, 1);
+mcs_ped = arrayfun(@(x) x.TBs(1).MCS, traco_plot{1}(quadros_zoom));
+stairs(ax1, quadros_zoom, mcs_ped, 'LineWidth', 1.6, 'Color', cores(1, :));
+formatar_eixo_academico(ax1);
+ylim(ax1, [0 28]); xlim(ax1, [1 max(quadros_zoom)]);
+title(ax1, '\textbf{(a) Pedestrian Scenario: $I_{\mathrm{MCS}}$ Trajectory}', 'Interpreter', 'latex', 'FontSize', 11);
+xlabel(ax1, 'NR Frame Index, $n$', 'Interpreter', 'latex', 'FontSize', 10.5);
+ylabel(ax1, 'MCS Index, $I_{\mathrm{MCS}}$', 'Interpreter', 'latex', 'FontSize', 10.5);
+
+% --- Panel (b): Vehicular MCS Sequence ---
+ax2 = nexttile(tlo, 2);
+mcs_vei = arrayfun(@(x) x.TBs(1).MCS, traco_plot{2}(quadros_zoom));
+stairs(ax2, quadros_zoom, mcs_vei, 'LineWidth', 1.6, 'Color', cores(1, :));
+formatar_eixo_academico(ax2);
+ylim(ax2, [0 28]); xlim(ax2, [1 max(quadros_zoom)]);
+title(ax2, '\textbf{(b) Vehicular Scenario: $I_{\mathrm{MCS}}$ Trajectory}', 'Interpreter', 'latex', 'FontSize', 11);
+xlabel(ax2, 'NR Frame Index, $n$', 'Interpreter', 'latex', 'FontSize', 10.5);
+ylabel(ax2, 'MCS Index, $I_{\mathrm{MCS}}$', 'Interpreter', 'latex', 'FontSize', 10.5);
+
+% Y-axis limits for cumulative latency panels
+ymin_val = max(1e-2, min(media_agregada(:)) * 0.45);
+ymax_val = max(media_agregada(:) + ic_95(:)) * 1.8;
+
+titulos_cd = { ...
+    '\textbf{(c) Pedestrian: Cumulative Mean Encoding Latency}', ...
+    '\textbf{(d) Vehicular: Cumulative Mean Encoding Latency}' ...
+};
+
+% --- Panels (c) and (d): Cumulative Mean Latency + 95% CI Bands ---
+for ch = 1:2
+    ax = nexttile(tlo, 2 + ch);
+    hold(ax, 'on');
+    h_lines = zeros(1, num_algs);
+    
+    for a = 1:num_algs
+        curva_m  = reshape(media_agregada(a, ch, :), 1, Nframes);
+        curva_ic = reshape(ic_95(a, ch, :), 1, Nframes);
+        
+        % 95% CI shaded band (clamped for logarithmic scale)
+        lim_inf = max(ymin_val * 0.1, curva_m - curva_ic);
+        lim_sup = curva_m + curva_ic;
+        
+        if Nseeds > 1
+            fill(ax, [eixo_q, fliplr(eixo_q)], [lim_inf, fliplr(lim_sup)], cores(a, :), ...
+                 'FaceAlpha', 0.18, 'EdgeColor', 'none', 'HandleVisibility', 'off');
+        end
+        
+        h_lines(a) = plot(ax, eixo_q, curva_m, 'LineStyle', estilos_linha{a}, ...
+                          'LineWidth', 1.9, 'Color', cores(a, :));
+    end
+    
+    set(ax, 'YScale', 'log');
+    formatar_eixo_academico(ax);
+    ylim(ax, [ymin_val ymax_val]);
+    xlim(ax, [1 Nframes]);
+    
+    title(ax, titulos_cd{ch}, 'Interpreter', 'latex', 'FontSize', 11);
+    xlabel(ax, 'Number of Processed Frames, $n$', 'Interpreter', 'latex', 'FontSize', 10.5);
+    ylabel(ax, 'Cumulative Mean Latency, $\bar{T}(n)$ [ms]', 'Interpreter', 'latex', 'FontSize', 10.5);
+    
+    leg = legend(ax, h_lines, alg_labels_latex, 'Location', 'northeast', ...
+                 'Interpreter', 'latex', 'FontSize', 9.2);
+    set(leg, 'Color', 'w', 'EdgeColor', [0.2 0.2 0.2], 'TextColor', 'k', 'Box', 'on');
+end
+
+% Save editable MATLAB figure, Vector PDF (for LaTeX/Overleaf), and 600 DPI PNG
+savefig(fig6, 'Figure6_LDPC_Dynamic_MCS.fig');
+exportgraphics(fig6, 'Figure6_LDPC_Dynamic_MCS.pdf', 'ContentType', 'vector', 'BackgroundColor', 'white');
+exportgraphics(fig6, 'Figure6_LDPC_Dynamic_MCS.png', 'Resolution', 600, 'BackgroundColor', 'white');
+fprintf('Figures exported: "Figure6_LDPC_Dynamic_MCS.pdf" (Vector) and ".png" (600 DPI).\n');
+
+%% ========================================================================
+%  MODULAR HELPER FUNCTIONS
+%  ========================================================================
+
+function formatar_eixo_academico(ax)
+    % Enforces IEEE academic style regardless of MATLAB Dark/Light theme
+    grid(ax, 'on');
+    box(ax, 'on');
+    set(ax, 'Color', 'w', ...
+            'XColor', 'k', 'YColor', 'k', ...
+            'TickLabelInterpreter', 'latex', ...
+            'FontSize', 10, ...
+            'LineWidth', 0.85, ...
+            'TickDir', 'in', ...
+            'GridAlpha', 0.25, ...
+            'MinorGridAlpha', 0.12, ...
+            'GridColor', [0.15 0.15 0.15], ...
+            'MinorGridColor', [0.25 0.25 0.25]);
+end
+
+function traco = gerar_traco_5gnr(cenario, Nframes, semente)
+    if strcmpi(cenario, 'Pedestre')
+        rng(1000 + semente);
+    else
+        rng(5000 + semente);
+    end
+    
+    % 3GPP TS 38.214 - Table 5.1.3.1-1: [MCS, Qm, R_x1024]
+    tabela_MCS = [
+         0, 2, 120;   1, 2, 157;   2, 2, 193;   3, 2, 251;   4, 2, 308;
+         5, 2, 379;   6, 2, 449;   7, 2, 526;   8, 2, 602;   9, 2, 679;
+        10, 4, 340;  11, 4, 378;  12, 4, 434;  13, 4, 490;  14, 4, 553;
+        15, 4, 616;  16, 4, 658;  17, 6, 438;  18, 6, 466;  19, 6, 517;
+        20, 6, 567;  21, 6, 616;  22, 6, 666;  23, 6, 719;  24, 6, 772;
+        25, 6, 822;  26, 6, 873;  27, 6, 910;  28, 6, 948
+    ];
+    
+    N_RE_slot = 51 * 12 * 12;
     mcs_atual = 14;
     
-    for f = 1:num_quadros
-        if ch == 1
-            % PEDESTRE (3 km/h): Canal lento, pequenas transições a cada 25 quadros
+    traco = repmat(struct('TBs', []), 1, Nframes);
+    
+    for f = 1:Nframes
+        if strcmpi(cenario, 'Pedestre')
             if mod(f, 25) == 1
                 passo = randi([-1, 1]);
                 mcs_atual = min(max(mcs_atual + passo, 12), 16);
             end
         else
-            % VEICULAR (120 km/h): Canal rápido, variação ampla de MCS a cada quadro
             mcs_atual = randi([1, 27]);
         end
         
         Qm = tabela_MCS(mcs_atual + 1, 2);
         R  = tabela_MCS(mcs_atual + 1, 3) / 1024;
         
-        % Calcula tamanho A (TBS) escalonado pela eficiência espectral (permitindo C >= 1)
         fator_carga = 0.25 + 0.05 * mod(mcs_atual, 5);
         A = max(120, 8 * round((N_RE_slot * Qm * R * fator_carga) / 8));
         
-        % Executa a cadeia 3GPP pré-LDPC (Fora da medição de tempo LDPC)
-        BGn = Base_Graph_selector(A, R);
-        
+        % 3GPP TS 38.212 pre-encoding chain
+        BGn         = Base_Graph_selector(A, R);
         tb_bits     = randi([0 1], 1, A);
         tb_crc      = crc_generator(tb_bits);
         TB_with_CRC = [tb_bits, tb_crc];
         
         [cbs_raw, C, K_prime, ~] = codeBlockSegmentation(TB_with_CRC, BGn);
-        cbs_crc = codeblockcrcimplementation(cbs_raw, C);
-        
-        [Zc, Kb] = Zc_selector(K_prime, BGn);
+        cbs_crc                  = codeblockcrcimplementation(cbs_raw, C);
+        [Zc, Kb]                 = Zc_selector(K_prime, BGn);
         
         Kb_max  = 22; if BGn == 2; Kb_max = 10; end
         K_total = Kb_max * Zc;
-        cbs_filler = codeBlockFiller(cbs_crc, C, K_total);
+        cbs_f   = codeBlockFiller(cbs_crc, C, K_total);
         
-        MCS_seq(f) = mcs_atual;
-        A_seq(f)   = A;
-        BG_seq(f)  = BGn;
-        C_seq(f)   = C;
-        Zc_seq(f)  = Zc;
-        Kb_seq(f)  = Kb;
-        cbs_cel{f} = cbs_filler;
-    end
-    
-    tracos(ch).MCS = MCS_seq;
-    tracos(ch).A   = A_seq;
-    tracos(ch).BGn = BG_seq;
-    tracos(ch).C   = C_seq;
-    tracos(ch).Zc  = Zc_seq;
-    tracos(ch).Kb  = Kb_seq;
-    tracos(ch).cbs = cbs_cel;
-end
-
-%% 4. FASE 4: BENCHMARK PAREADO COM CACHE FRIO
-fprintf('\n=== FASE 4: Executando Benchmark Pareado com Cache Frio ===\n');
-
-t_prep_hist  = zeros(2, 2, num_quadros);
-t_enc_hist   = zeros(2, 2, num_quadros);
-t_tot_hist   = zeros(2, 2, num_quadros);
-cache_hits   = zeros(2, 2); % Contabilizado por Code Block
-cache_misses = zeros(2, 2); % Contabilizado por Code Block
-
-for ch = 1:2
-    fprintf('  Simulando cenário %s (%d quadros)...\n', cenarios{ch}, num_quadros);
-    
-    % Inicializa Caches Frios vazios para o cenário atual
-    cache_Conv = containers.Map('KeyType', 'char', 'ValueType', 'any');
-    cache_Prop = containers.Map('KeyType', 'char', 'ValueType', 'any');
-    
-    for f = 1:num_quadros
-        Zc    = tracos(ch).Zc(f);
-        BGn   = tracos(ch).BGn(f);
-        C     = tracos(ch).C(f);
-        cbs_f = tracos(ch).cbs{f};
+        tb_struct = struct( ...
+            'MCS', mcs_atual, ...
+            'Qm',  Qm, ...
+            'R',   R, ...
+            'A',   A, ...
+            'BGn', BGn, ...
+            'C',   C, ...
+            'Zc',  Zc, ...
+            'Kb',  Kb, ...
+            'cbs', {cbs_f} ...
+        );
         
-        % Chave estrutural do cache: K = (BG, Zc)
-        chave = sprintf('BG%d_Zc%d', BGn, Zc);
-        
-        % -----------------------------------------------------------------
-        % ALGORITMO 1: CONVENCIONAL (MATRIZ G + codeBlockEncoding.m)
-        % -----------------------------------------------------------------
-        if ~isKey(cache_Conv, chave) % CACHE MISS no 1º CB; os demais (C-1) CBs são HIT
-            cache_misses(ch, 1) = cache_misses(ch, 1) + 1;
-            cache_hits(ch, 1)   = cache_hits(ch, 1) + (C - 1);
-            t0 = tic;
-            [BG_mat, ~] = baseGraph_generator(BGn, Zc);
-            H_temp = H_matrix_generator(BG_mat, Zc);
-            G_mat  = G_matrix_generator_2(H_temp, Zc);
-            tPrep_C = toc(t0);
-            cache_Conv(chave) = G_mat;
-        else % CACHE HIT em todos os C Code Blocks do quadro
-            cache_hits(ch, 1) = cache_hits(ch, 1) + C;
-            tPrep_C = 0;
-            G_mat = cache_Conv(chave);
-        end
-        
-        % Chama diretamente a função codeBlockEncoding.m da equipe
-        t0 = tic;
-        encoded_c = codeBlockEncoding(cbs_f, C, G_mat); %#ok<NASGU>
-        tEnc_C = toc(t0);
-        
-        t_prep_hist(ch, 1, f) = tPrep_C;
-        t_enc_hist(ch, 1, f)  = tEnc_C;
-        t_tot_hist(ch, 1, f)  = tPrep_C + tEnc_C;
-        
-        % -----------------------------------------------------------------
-        % ALGORITMO 2: PROPOSTO (TWO-STEP / H ESPARSA)
-        % -----------------------------------------------------------------
-        if ~isKey(cache_Prop, chave) % CACHE MISS no 1º CB; os demais (C-1) CBs são HIT
-            cache_misses(ch, 2) = cache_misses(ch, 2) + 1;
-            cache_hits(ch, 2)   = cache_hits(ch, 2) + (C - 1);
-            t0 = tic;
-            [BG_mat, i_ls] = baseGraph_generator(BGn, Zc);
-            H_esp = H_matrix_generator(BG_mat, Zc);
-            dados_prop = struct('H', H_esp, 'i_ls', i_ls);
-            tPrep_P = toc(t0);
-            cache_Prop(chave) = dados_prop;
-        else % CACHE HIT em todos os C Code Blocks do quadro
-            cache_hits(ch, 2) = cache_hits(ch, 2) + C;
-            tPrep_P = 0;
-            dados_prop = cache_Prop(chave);
-        end
-        
-        % Estrutura espelhada à codeBlockEncoding.m para os C Code Blocks
-        t0 = tic;
-        encoded_p = cell(1, C);
-        for i = 1:C
-            code_block_GF2 = cbs_f{i};
-            code_block_GF2(code_block_GF2 == -1) = 0;
-            encoded_p{i} = H_matrix_codeword_generator(code_block_GF2, dados_prop.H, Zc, BGn, dados_prop.i_ls);
-        end
-        tEnc_P = toc(t0);
-        
-        t_prep_hist(ch, 2, f) = tPrep_P;
-        t_enc_hist(ch, 2, f)  = tEnc_P;
-        t_tot_hist(ch, 2, f)  = tPrep_P + tEnc_P;
-        
-        if mod(f, 200) == 0
-            fprintf('    Quadro %d/%d concluído.\n', f, num_quadros);
-        end
+        traco(f).TBs = tb_struct;
     end
 end
 
-%% 5. FASE 5: TABELA AUXILIAR E GERAÇÃO DA FIGURA 6 (4 PAINÉIS)
-fprintf('\n=== RESUMO PARA A TABELA AUXILIAR DO ARTIGO ===\n');
-for ch = 1:2
-    trocas_MCS = sum(diff(tracos(ch).MCS) ~= 0);
-    trocas_BG  = sum(diff(tracos(ch).BGn) ~= 0);
-    trocas_Zc  = sum(diff(tracos(ch).Zc) ~= 0);
-    total_CBs  = sum(tracos(ch).C);
-    hit_rate   = 100 * cache_hits(ch, 1) / total_CBs;
-    
-    fprintf('Cenário %s:\n', cenarios{ch});
-    fprintf('  - Total de Quadros: %d | Total de Code Blocks processados: %d (Média: %.2f CB/TB)\n', ...
-        num_quadros, total_CBs, total_CBs / num_quadros);
-    fprintf('  - Alterações de MCS: %d | Alterações de BG: %d | Alterações de Zc: %d\n', ...
-        trocas_MCS, trocas_BG, trocas_Zc);
-    fprintf('  - Configurações (BG, Zc) inéditas (Cache Misses): %d | Cache Hit Rate (por CB): %.1f%%\n', ...
-        cache_misses(ch, 1), hit_rate);
-    fprintf('  - Tempo Médio Final Convencional: %.3f ms/quadro\n', 1000 * mean(t_tot_hist(ch, 1, :)));
-    fprintf('  - Tempo Médio Final Proposto:     %.3f ms/quadro\n\n', 1000 * mean(t_tot_hist(ch, 2, :)));
+function cache = criar_cache_vazio()
+    cache = containers.Map('KeyType', 'char', 'ValueType', 'any');
 end
 
-% Cálculo da média acumulada em milissegundos (ms)
-media_acum_ms = zeros(2, 2, num_quadros);
-eixo_q = 1:num_quadros;
-for ch = 1:2
-    for alg = 1:2
-        tempos_ms = 1000 * squeeze(t_tot_hist(ch, alg, :))';
-        media_acum_ms(ch, alg, :) = cumsum(tempos_ms) ./ eixo_q;
+function chave = criar_chave_estrutura(tb)
+    chave = sprintf('BG%d_Zc%d', tb.BGn, tb.Zc);
+end
+
+function flag = cache_contem(cache, chave)
+    flag = isKey(cache, chave);
+end
+
+function cache = guardar(cache, chave, dados)
+    cache(chave) = dados;
+end
+
+function dados = consultar(cache, chave)
+    dados = cache(chave);
+end
+
+function dados = preparar_estrutura(algoritmo, tb)
+    [BG_mat, i_ls] = baseGraph_generator(tb.BGn, tb.Zc);
+    H_mat          = H_matrix_generator(BG_mat, tb.Zc);
+    
+    switch algoritmo
+        case 'Convencional'
+            dados = G_matrix_generator_2(H_mat, tb.Zc);
+            
+        case 'Richardson'
+            dados = ldpc_encode_nr_preprocess(H_mat, tb.Zc);
+            
+        case 'Proposto'
+            dados = H_matrix_codeword_preprocess(H_mat, tb.Zc, tb.BGn, i_ls);
+            
+        otherwise
+            error('Unknown algorithm: %s', algoritmo);
     end
 end
 
-% Plotagem da Figura 6 (4 painéis)
-fig6 = figure('Name', 'Figura 6 - Adaptação Dinâmica de MCS', 'Position', [100, 100, 1050, 650]);
-quadros_zoom = 1:min(100, num_quadros);
+function cw = codificar_blocos_do_TB(algoritmo, tb, dados)
+    C     = tb.C;
+    cbs_f = tb.cbs;
+    
+    switch algoritmo
+        case 'Convencional'
+            cw = codeBlockEncoding(cbs_f, C, dados);
+            
+        case 'Richardson'
+            cw = cell(1, C);
+            for i = 1:C
+                code_block_GF2 = cbs_f{i};
+                code_block_GF2(code_block_GF2 == -1) = 0;
+                cw{i} = ldpc_encode_nr_process(code_block_GF2, dados);
+            end
+            
+        case 'Proposto'
+            cw = cell(1, C);
+            for i = 1:C
+                code_block_GF2 = cbs_f{i};
+                code_block_GF2(code_block_GF2 == -1) = 0;
+                cw{i} = H_matrix_codeword_generator_process(code_block_GF2, dados);
+            end
+    end
+end
 
-% Painel (a): Sequência de MCS Pedestre
-subplot(2, 2, 1);
-stairs(quadros_zoom, tracos(1).MCS(quadros_zoom), 'LineWidth', 1.8, 'Color', [0.12 0.47 0.71]);
-grid on;
-title('(a) Pedestre: sequência de MCS');
-xlabel('Quadro NR'); ylabel('Índice MCS');
-ylim([0 28]);
-
-% Painel (b): Sequência de MCS Veicular
-subplot(2, 2, 2);
-stairs(quadros_zoom, tracos(2).MCS(quadros_zoom), 'LineWidth', 1.8, 'Color', [0.12 0.47 0.71]);
-grid on;
-title('(b) Veicular: sequência de MCS');
-xlabel('Quadro NR'); ylabel('Índice MCS');
-ylim([0 28]);
-
-ymin_val = min(media_acum_ms(:)) * 0.8;
-ymax_val = max(media_acum_ms(:)) * 1.2;
-
-% Painel (c): Média Acumulada Pedestre
-subplot(2, 2, 3);
-plot(eixo_q, squeeze(media_acum_ms(1, 1, :)), 'LineWidth', 2, 'Color', [0.12 0.47 0.71]); hold on;
-plot(eixo_q, squeeze(media_acum_ms(1, 2, :)), 'LineWidth', 2, 'Color', [0.17 0.63 0.17]);
-set(gca, 'YScale', 'log'); grid on;
-title('(c) Pedestre: média acumulada');
-xlabel('Número de quadros processados'); ylabel('Tempo médio (ms)');
-ylim([ymin_val ymax_val]);
-legend(algoritmos, 'Location', 'northeast');
-
-% Painel (d): Média Acumulada Veicular
-subplot(2, 2, 4);
-plot(eixo_q, squeeze(media_acum_ms(2, 1, :)), 'LineWidth', 2, 'Color', [0.12 0.47 0.71]); hold on;
-plot(eixo_q, squeeze(media_acum_ms(2, 2, :)), 'LineWidth', 2, 'Color', [0.17 0.63 0.17]);
-set(gca, 'YScale', 'log'); grid on;
-title('(d) Veicular: média acumulada');
-xlabel('Número de quadros processados'); ylabel('Tempo médio (ms)');
-ylim([ymin_val ymax_val]);
-legend(algoritmos, 'Location', 'northeast');
-
-savefig(fig6, 'Figura6_LDPC_MCS_Dinamico.fig');
-fprintf('Gráfico salvo com sucesso como "Figura6_LDPC_MCS_Dinamico.fig"!\n');
+function validar_fora_do_benchmark(cw, tb, algoritmo)
+    if strcmp(algoritmo, 'Richardson')
+        return;
+    end
+    [BG_mat, ~] = baseGraph_generator(tb.BGn, tb.Zc);
+    H_mat       = H_matrix_generator(BG_mat, tb.Zc);
+    for i = 1:tb.C
+        c_vec = double(cw{i}(:));
+        if any(mod(H_mat * c_vec, 2) ~= 0)
+            error('Syndrome check failed in %s (BG%d, Zc=%d)!', ...
+                algoritmo, tb.BGn, tb.Zc);
+        end
+    end
+end
