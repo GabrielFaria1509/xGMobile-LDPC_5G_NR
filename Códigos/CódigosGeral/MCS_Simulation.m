@@ -11,17 +11,17 @@ clear; clc; close all;
 addpath(genpath(pwd));
 
 %% 1. SIMULATION PARAMETERS
-Nframes = 20;   % Change to 1000 for the final overnight run
-Nseeds  = 2;    % Change to 20 for the final overnight run
+Nframes = 10;   
+Nseeds  = 2;    
 
 cenarios   = {'Pedestre', 'Veicular'};
 algoritmos = {'Convencional', 'Richardson', 'Proposto'};
 
-% Formal LaTeX labels for international publication (IEEE style)
+% Clean legend labels matching the manuscript style
 alg_labels_latex = { ...
-    'Conventional ($\mathbf{G}$ Matrix)', ...
+    'Conventional', ...
     'Richardson--Urbanke', ...
-    'Proposed (Two-Step $\mathbf{H}$)' ...
+    'Proposal' ...
 };
 
 num_algs = numel(algoritmos);
@@ -123,7 +123,8 @@ media_acum_s = cumsum(tempo_ms, 4) ./ divisor_N; % Dimensions: (a, ch, s, f)
 media_agregada = reshape(mean(media_acum_s, 3), [num_algs, num_ch, Nframes]);
 if Nseeds > 1
     std_agregado = reshape(std(media_acum_s, 0, 3), [num_algs, num_ch, Nframes]);
-    t_critico    = tinv(0.975, Nseeds - 1);
+    gl           = Nseeds - 1; % Degrees of freedom (base MATLAB via betaincinv)
+    t_critico    = sqrt(gl * (1 / betaincinv(0.05, gl / 2, 0.5) - 1));
     ic_95        = t_critico * (std_agregado / sqrt(Nseeds));
 else
     ic_95 = zeros(num_algs, num_ch, Nframes);
@@ -149,12 +150,12 @@ for ch = 1:num_ch
         m_final  = media_agregada(a, ch, end);
         ic_final = ic_95(a, ch, end);
         fprintf('  - %-12s -> Final Mean Latency: %8.3f +- %6.3f ms/frame\n', ...
-            algoritmos{a}, m_final, ic_final);
+            alg_labels_latex{a}, m_final, ic_final);
     end
     fprintf('\n');
 end
 
-%% 5. IEEE PUBLICATION-GRADE FIGURE GENERATION (LATEX FORMATTING)
+%% 5. IEEE PUBLICATION-GRADE FIGURE GENERATION (MATCHING MANUSCRIPT STYLE)
 fig6 = figure('Name', 'Figure 6 - Dynamic MCS Adaptation Benchmark', ...
               'Units', 'pixels', 'Position', [100, 80, 960, 640], ...
               'Color', 'w', 'InvertHardcopy', 'off');
@@ -163,100 +164,109 @@ tlo = tiledlayout(2, 2, 'TileSpacing', 'compact', 'Padding', 'compact');
 
 quadros_zoom = 1:min(100, Nframes);
 eixo_q       = 1:Nframes;
+xmax_zoom    = max(2, max(quadros_zoom));
+xmax_full    = max(2, Nframes);
 
-% Colorblind-safe academic palette & distinct line styles for B&W print
-cores = [0.00, 0.45, 0.74;   % Deep Blue   - Conventional (G)
-         0.85, 0.33, 0.10;   % Burnt Orange - Richardson-Urbanke
-         0.13, 0.55, 0.13];  % Forest Green - Proposed (Two-Step H)
-estilos_linha = {'--', '-.', '-'};
+% Exact colors and markers matching the existing manuscript figure:
+%   1. Blue with circles ('o')     - Conventional
+%   2. Orange with squares ('s')   - Richardson-Urbanke
+%   3. Olive Green with triangles ('^') - Proposal
+cores = [0.0000, 0.4470, 0.7410;   % MATLAB/IEEE Blue
+         0.8500, 0.3250, 0.0980;   % MATLAB/IEEE Orange
+         0.4660, 0.6740, 0.1880];  % MATLAB/IEEE Green (matches paper)
+marcadores = {'o', 's', '^'};
+
+% Automatically space markers so the curve looks clean for any Nframes (10 or 1000)
+passo_marcador = max(1, round(Nframes / 20));
+idx_marcadores = unique([1 : passo_marcador : Nframes, Nframes]);
 
 % --- Panel (a): Pedestrian MCS Sequence ---
 ax1 = nexttile(tlo, 1);
 mcs_ped = arrayfun(@(x) x.TBs(1).MCS, traco_plot{1}(quadros_zoom));
 stairs(ax1, quadros_zoom, mcs_ped, 'LineWidth', 1.6, 'Color', cores(1, :));
 formatar_eixo_academico(ax1);
-ylim(ax1, [0 28]); xlim(ax1, [1 max(quadros_zoom)]);
-title(ax1, '\textbf{(a) Pedestrian Scenario: $I_{\mathrm{MCS}}$ Trajectory}', 'Interpreter', 'latex', 'FontSize', 11);
-xlabel(ax1, 'NR Frame Index, $n$', 'Interpreter', 'latex', 'FontSize', 10.5);
-ylabel(ax1, 'MCS Index, $I_{\mathrm{MCS}}$', 'Interpreter', 'latex', 'FontSize', 10.5);
+ylim(ax1, [0 28]); xlim(ax1, [1 xmax_zoom]);
+title(ax1, '\textbf{(a) Pedestrian Scenario: $I_{\mathrm{MCS}}$ Trajectory}', ...
+      'Interpreter', 'latex', 'FontSize', 11.5, 'Color', 'k');
+xlabel(ax1, 'NR Frame Index ($n$)', 'Interpreter', 'latex', 'FontSize', 11, 'Color', 'k');
+ylabel(ax1, 'MCS Index ($I_{\mathrm{MCS}}$)', 'Interpreter', 'latex', 'FontSize', 11, 'Color', 'k');
 
 % --- Panel (b): Vehicular MCS Sequence ---
 ax2 = nexttile(tlo, 2);
 mcs_vei = arrayfun(@(x) x.TBs(1).MCS, traco_plot{2}(quadros_zoom));
 stairs(ax2, quadros_zoom, mcs_vei, 'LineWidth', 1.6, 'Color', cores(1, :));
 formatar_eixo_academico(ax2);
-ylim(ax2, [0 28]); xlim(ax2, [1 max(quadros_zoom)]);
-title(ax2, '\textbf{(b) Vehicular Scenario: $I_{\mathrm{MCS}}$ Trajectory}', 'Interpreter', 'latex', 'FontSize', 11);
-xlabel(ax2, 'NR Frame Index, $n$', 'Interpreter', 'latex', 'FontSize', 10.5);
-ylabel(ax2, 'MCS Index, $I_{\mathrm{MCS}}$', 'Interpreter', 'latex', 'FontSize', 10.5);
+ylim(ax2, [0 28]); xlim(ax2, [1 xmax_zoom]);
+title(ax2, '\textbf{(b) Vehicular Scenario: $I_{\mathrm{MCS}}$ Trajectory}', ...
+      'Interpreter', 'latex', 'FontSize', 11.5, 'Color', 'k');
+xlabel(ax2, 'NR Frame Index ($n$)', 'Interpreter', 'latex', 'FontSize', 11, 'Color', 'k');
+ylabel(ax2, 'MCS Index ($I_{\mathrm{MCS}}$)', 'Interpreter', 'latex', 'FontSize', 11, 'Color', 'k');
 
-% Y-axis limits for cumulative latency panels
-ymin_val = max(1e-2, min(media_agregada(:)) * 0.45);
-ymax_val = max(media_agregada(:) + ic_95(:)) * 1.8;
+% Y-axis limits for cumulative latency panels (based strictly on clean curves)
+ymin_val = 10^floor(log10(max(1e-3, min(media_agregada(:)) * 0.7)));
+ymax_val = 10^ceil(log10(max(media_agregada(:)) * 1.4));
 
 titulos_cd = { ...
     '\textbf{(c) Pedestrian: Cumulative Mean Encoding Latency}', ...
     '\textbf{(d) Vehicular: Cumulative Mean Encoding Latency}' ...
 };
 
-% --- Panels (c) and (d): Cumulative Mean Latency + 95% CI Bands ---
+% --- Panels (c) and (d): Clean Cumulative Mean Latency Curves ---
 for ch = 1:2
     ax = nexttile(tlo, 2 + ch);
     hold(ax, 'on');
     h_lines = zeros(1, num_algs);
     
     for a = 1:num_algs
-        curva_m  = reshape(media_agregada(a, ch, :), 1, Nframes);
-        curva_ic = reshape(ic_95(a, ch, :), 1, Nframes);
+        curva_m = reshape(media_agregada(a, ch, :), 1, Nframes);
         
-        % 95% CI shaded band (clamped for logarithmic scale)
-        lim_inf = max(ymin_val * 0.1, curva_m - curva_ic);
-        lim_sup = curva_m + curva_ic;
-        
-        if Nseeds > 1
-            fill(ax, [eixo_q, fliplr(eixo_q)], [lim_inf, fliplr(lim_sup)], cores(a, :), ...
-                 'FaceAlpha', 0.18, 'EdgeColor', 'none', 'HandleVisibility', 'off');
-        end
-        
-        h_lines(a) = plot(ax, eixo_q, curva_m, 'LineStyle', estilos_linha{a}, ...
-                          'LineWidth', 1.9, 'Color', cores(a, :));
+        h_lines(a) = plot(ax, eixo_q, curva_m, ...
+                          'LineStyle', '-', ...
+                          'LineWidth', 1.6, ...
+                          'Color', cores(a, :), ...
+                          'Marker', marcadores{a}, ...
+                          'MarkerSize', 5.5, ...
+                          'MarkerIndices', idx_marcadores);
     end
     
     set(ax, 'YScale', 'log');
     formatar_eixo_academico(ax);
     ylim(ax, [ymin_val ymax_val]);
-    xlim(ax, [1 Nframes]);
+    xlim(ax, [1 xmax_full]);
     
-    title(ax, titulos_cd{ch}, 'Interpreter', 'latex', 'FontSize', 11);
-    xlabel(ax, 'Number of Processed Frames, $n$', 'Interpreter', 'latex', 'FontSize', 10.5);
-    ylabel(ax, 'Cumulative Mean Latency, $\bar{T}(n)$ [ms]', 'Interpreter', 'latex', 'FontSize', 10.5);
+    title(ax, titulos_cd{ch}, 'Interpreter', 'latex', 'FontSize', 11.5, 'Color', 'k');
+    xlabel(ax, 'Number of Processed Frames ($n$)', 'Interpreter', 'latex', 'FontSize', 11, 'Color', 'k');
+    ylabel(ax, 'Cumulative Mean Latency, $\bar{T}(n)$ (ms)', 'Interpreter', 'latex', 'FontSize', 11, 'Color', 'k');
     
     leg = legend(ax, h_lines, alg_labels_latex, 'Location', 'northeast', ...
-                 'Interpreter', 'latex', 'FontSize', 9.2);
-    set(leg, 'Color', 'w', 'EdgeColor', [0.2 0.2 0.2], 'TextColor', 'k', 'Box', 'on');
+                 'Interpreter', 'latex', 'FontSize', 9.5);
+    set(leg, 'Color', 'w', 'EdgeColor', 'k', 'TextColor', 'k', 'Box', 'on', 'LineWidth', 0.8);
 end
 
-% Save editable MATLAB figure, Vector PDF (for LaTeX/Overleaf), and 600 DPI PNG
+% Save raw benchmark data + editable MATLAB figure, Vector PDF, and 600 DPI PNG
+save('Resultados_Benchmark_LDPC.mat', 'tempo', 'media_agregada', 'ic_95', 'traco_plot', ...
+     'stats_misses', 'stats_hits', 'stats_CBs', 'stats_MCS_sw', 'stats_BG_sw', 'stats_Zc_sw', 'Nframes', 'Nseeds');
 savefig(fig6, 'Figure6_LDPC_Dynamic_MCS.fig');
 exportgraphics(fig6, 'Figure6_LDPC_Dynamic_MCS.pdf', 'ContentType', 'vector', 'BackgroundColor', 'white');
 exportgraphics(fig6, 'Figure6_LDPC_Dynamic_MCS.png', 'Resolution', 600, 'BackgroundColor', 'white');
-fprintf('Figures exported: "Figure6_LDPC_Dynamic_MCS.pdf" (Vector) and ".png" (600 DPI).\n');
+fprintf('Data saved to "Resultados_Benchmark_LDPC.mat" and figures exported (.pdf and .png).\n');
 
 %% ========================================================================
 %  MODULAR HELPER FUNCTIONS
 %  ========================================================================
 
 function formatar_eixo_academico(ax)
-    % Enforces IEEE academic style regardless of MATLAB Dark/Light theme
+    % Matches exact IEEE / manuscript style with crisp black borders and ticks
     grid(ax, 'on');
     box(ax, 'on');
     set(ax, 'Color', 'w', ...
             'XColor', 'k', 'YColor', 'k', ...
             'TickLabelInterpreter', 'latex', ...
-            'FontSize', 10, ...
-            'LineWidth', 0.85, ...
+            'FontSize', 10.5, ...
+            'LineWidth', 1.0, ...
             'TickDir', 'in', ...
-            'GridAlpha', 0.25, ...
+            'TickLength', [0.015 0.015], ...
+            'GridAlpha', 0.22, ...
             'MinorGridAlpha', 0.12, ...
             'GridColor', [0.15 0.15 0.15], ...
             'MinorGridColor', [0.25 0.25 0.25]);
