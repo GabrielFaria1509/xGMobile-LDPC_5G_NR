@@ -11,8 +11,8 @@ clear; clc; close all;
 addpath(genpath(pwd));
 
 %% 1. SIMULATION PARAMETERS
-Nframes = 10;   
-Nseeds  = 2;    
+Nframes = 1000;   
+Nseeds  = 20;    
 
 cenarios   = {'Pedestre', 'Veicular'};
 algoritmos = {'Convencional', 'Richardson', 'Proposto'};
